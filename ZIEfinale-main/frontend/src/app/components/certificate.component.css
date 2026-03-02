@@ -1,0 +1,352 @@
+@import url('https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap');
+
+.certificate-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
+  min-height: 100vh;
+}
+
+.certificate-container {
+  width: 100%;
+  max-width: 900px;
+  padding: 50px;
+  background-color: #fdfbf4;
+  position: relative;
+  font-family: 'Times New Roman', serif;
+  color: #333;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  min-height: 1000px;
+  display: flex;
+  flex-direction: column;
+}
+
+.border-outer {
+  border: 8px double #333;
+  flex: 1;
+  position: relative;
+}
+
+.border-inner {
+  border: 2px solid #333;
+  flex: 1;
+  padding: 40px 50px;
+  position: relative;
+  outline: 1px solid #333;
+  outline-offset: -10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Header Section */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header .logo {
+  height: 60px;
+  width: auto;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 28px;
+  letter-spacing: 2px;
+  margin: 0;
+  font-weight: normal;
+  font-style: normal;
+}
+
+.header h2 {
+  font-size: 18px;
+  letter-spacing: 3px;
+  margin: 5px 0;
+  font-weight: normal;
+}
+
+.header h3 {
+  font-size: 32px;
+  letter-spacing: 5px;
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+.header .founded {
+  font-size: 11px;
+  margin-top: 15px;
+  letter-spacing: 1px;
+  color: #555;
+}
+
+/* Content Section */
+.content {
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.certify-text {
+  font-size: 18px;
+  margin: 0 0 20px 0;
+  font-style: italic;
+}
+
+.applicant-name {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 48px;
+  border-bottom: 2px dotted #333;
+  display: inline-block;
+  min-width: 80%;
+  margin: 20px auto;
+  padding-bottom: 10px;
+  letter-spacing: 1px;
+  font-weight: normal;
+}
+
+.admission-text {
+  font-size: 16px;
+  margin: 20px 0 15px 0;
+  font-style: italic;
+}
+
+.membership-level {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #004A59;
+}
+
+.division-text {
+  font-size: 14px;
+  margin: 15px 0 10px 0;
+  letter-spacing: 1px;
+  font-style: italic;
+}
+
+.division-value {
+  font-weight: bold;
+  color: #333;
+}
+
+.institution-text {
+  font-size: 16px;
+  margin: 20px 0 10px 0;
+  font-style: italic;
+}
+
+.date-row {
+  font-size: 14px;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.date-value {
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  display: inline-block;
+  min-width: 150px;
+  text-align: center;
+}
+
+/* Footer Section */
+.footer {
+  position: relative;
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+/* The Red Serrated Seal */
+.seal {
+  width: 100px;
+  height: 100px;
+  background-color: #a02d2d;
+  clip-path: polygon(50% 0%, 54% 13%, 67% 6%, 66% 20%, 79% 17%, 74% 30%, 86% 32%, 78% 43%, 88% 50%, 78% 57%, 86% 68%, 74% 70%, 79% 83%, 66% 80%, 67% 94%, 54% 87%, 50% 100%, 46% 87%, 33% 94%, 34% 80%, 21% 83%, 26% 70%, 14% 68%, 22% 57%, 12% 50%, 22% 43%, 14% 32%, 26% 30%, 21% 17%, 34% 20%, 33% 6%, 46% 13%);
+  box-shadow: 0 4px 15px rgba(160, 45, 45, 0.3);
+  flex-shrink: 0;
+}
+
+/* Signatures */
+.signatures {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 20px;
+  flex: 1;
+}
+
+.sig-line {
+  border-top: 2px solid #333;
+  width: 120px;
+  padding-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.sig-line span {
+  display: block;
+  font-weight: normal;
+}
+
+/* Registration Number */
+.reg-number {
+  position: absolute;
+  bottom: 30px;
+  right: 40px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.btn-download,
+.btn-back {
+  padding: 12px 30px;
+  border: 2px solid #004A59;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-download {
+  background-color: #004A59;
+  color: white;
+}
+
+.btn-download:hover {
+  background-color: #003347;
+  box-shadow: 0 6px 16px rgba(0, 74, 89, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-back {
+  background-color: white;
+  color: #004A59;
+}
+
+.btn-back:hover {
+  background-color: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 74, 89, 0.2);
+}
+
+.error-message {
+  color: #d32f2f;
+  padding: 15px;
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f;
+  border-radius: 4px;
+  margin-top: 20px;
+  max-width: 600px;
+}
+
+/* Print Styles */
+@media print {
+  .certificate-wrapper {
+    background: white;
+    padding: 0;
+  }
+
+  .actions,
+  .error-message {
+    display: none;
+  }
+
+  .certificate-container {
+    width: 8.5in;
+    height: 11in;
+    box-shadow: none;
+    margin: 0;
+    padding: 50px;
+    max-width: 8.5in;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .certificate-container {
+    max-width: 800px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .header h3 {
+    font-size: 28px;
+  }
+
+  .applicant-name {
+    font-size: 40px;
+  }
+
+  .membership-level {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .certificate-container {
+    max-width: 100%;
+    padding: 30px;
+  }
+
+  .border-inner {
+    padding: 30px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+  }
+
+  .header h3 {
+    font-size: 24px;
+  }
+
+  .applicant-name {
+    font-size: 32px;
+  }
+
+  .membership-level {
+    font-size: 20px;
+  }
+
+  .signatures {
+    flex-direction: column;
+    gap: 20px;
+    padding-right: 0;
+  }
+
+  .sig-line {
+    margin: 0 auto;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn-download,
+  .btn-back {
+    width: 100%;
+  }
+}

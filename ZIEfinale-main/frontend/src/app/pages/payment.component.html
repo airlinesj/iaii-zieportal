@@ -1,0 +1,263 @@
+<div class="payment-wrapper">
+  <div class="payment-container">
+    <div class="payment-header">
+      <h1>Membership Application Payment</h1>
+      <p class="subtitle">Complete your payment to finalize your ZIE membership application</p>
+    </div>
+
+    <div class="payment-content">
+      <!-- Payment Summary Card -->
+      <div class="payment-summary">
+        <h2>Payment Summary</h2>
+        
+        <div class="summary-item" *ngIf="applicantInfo">
+          <label>Applicant Name:</label>
+          <span>{{ applicantInfo.firstName }} {{ applicantInfo.lastName }}</span>
+        </div>
+
+        <div class="summary-item" *ngIf="applicantInfo">
+          <label>Email:</label>
+          <span>{{ applicantInfo.email }}</span>
+        </div>
+
+        <div class="summary-item" *ngIf="membershipGrade">
+          <label>Membership Grade:</label>
+          <span>{{ membershipGrade }}</span>
+        </div>
+
+        <div class="summary-item" *ngIf="applicationFee">
+          <label>Application Fee:</label>
+          <span class="fee-amount">${{ applicationFee | number: '1.2-2' }}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="summary-item total">
+          <label>Total Amount Due:</label>
+          <span class="total-amount">${{ applicationFee | number: '1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Payment Gateway Card -->
+      <div class="payment-gateway">
+        <h2>Payment Method</h2>
+
+        <!-- Payment Method Selection -->
+        <div class="payment-methods">
+          <label class="method-option">
+            <input type="radio" name="method" value="card" [(ngModel)]="selectedPaymentMethod" />
+            <span class="icon material-symbols-outlined">credit_card</span>
+            <span class="method-label">Credit/Debit Card</span>
+          </label>
+          <label class="method-option">
+            <input type="radio" name="method" value="bank" [(ngModel)]="selectedPaymentMethod" />
+            <span class="icon material-symbols-outlined">account_balance</span>
+            <span class="method-label">Bank Transfer</span>
+          </label>
+          <label class="method-option">
+            <input type="radio" name="method" value="mobile" [(ngModel)]="selectedPaymentMethod" />
+            <span class="icon material-symbols-outlined">phone_in_talk</span>
+            <span class="method-label">Mobile Money</span>
+          </label>
+        </div>
+
+        <!-- Card Payment Form -->
+        <div class="payment-form" *ngIf="selectedPaymentMethod === 'card'">
+          <h3>Card Details</h3>
+          
+          <div class="form-group">
+            <label>Cardholder Name</label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="cardDetails.holderName"
+              placeholder="Full name on card"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Card Number</label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="cardDetails.cardNumber"
+              placeholder="1234 5678 9012 3456"
+              maxlength="19"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Expiry Date</label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="cardDetails.expiryDate"
+                placeholder="MM/YY"
+                maxlength="5"
+              />
+            </div>
+            <div class="form-group">
+              <label>CVV</label>
+              <input
+                type="password"
+                class="form-input"
+                [(ngModel)]="cardDetails.cvv"
+                placeholder="123"
+                maxlength="4"
+              />
+            </div>
+          </div>
+
+          <button (click)="processPayment()" class="btn-pay" [disabled]="isProcessing">
+            <span class="icon material-symbols-outlined">payment</span>
+            {{ isProcessing ? 'Processing...' : 'Pay Now' }}
+          </button>
+        </div>
+
+        <!-- Bank Transfer Info -->
+        <div class="payment-info" *ngIf="selectedPaymentMethod === 'bank'">
+          <h3>Bank Transfer Details</h3>
+          <p class="info-text">Please use the following bank details to transfer your payment:</p>
+          
+          <div class="bank-details">
+            <div class="detail-item">
+              <span class="label">Bank Name:</span>
+              <span class="value">Standard Chartered Bank</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Branch:</span>
+              <span class="value">Highlands</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Account Name:</span>
+              <span class="value">Zimbabwe Institute of Engineers</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">RTGS A/C No:</span>
+              <span class="value">0100 21676 4300</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Swift Code:</span>
+              <span class="value">SCBLZWHXXX</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Amount:</span>
+              <span class="value">${{ applicationFee | number: '1.2-2' }}</span>
+            </div>
+          </div>
+
+          <button (click)="confirmBankTransfer()" class="btn-confirm">
+            <span class="icon material-symbols-outlined">check_circle</span>
+            I have completed the transfer
+          </button>
+        </div>
+
+        <!-- Mobile Money Info -->
+        <div class="payment-info" *ngIf="selectedPaymentMethod === 'mobile'">
+          <h3>Mobile Money Payment</h3>
+          <p class="info-text">Send payment to: +263 78 XXX XXXX</p>
+          
+          <div class="form-group">
+            <label>Mobile Money Transaction ID</label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="mobileTransactionId"
+              placeholder="Enter transaction ID"
+            />
+          </div>
+
+          <button (click)="confirmMobilePayment()" class="btn-confirm" [disabled]="!mobileTransactionId">
+            <span class="icon material-symbols-outlined">check_circle</span>
+            Confirm Payment
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proof of Payment Upload Card -->
+    <div class="proof-of-payment-section" [class.required-step]="paymentCompletedRequiresProof">
+      <div class="section-header" *ngIf="paymentCompletedRequiresProof">
+        <span class="badge">Step 2: Upload Proof of Payment</span>
+      </div>
+      <h2>Upload Proof of Payment</h2>
+        <p class="subtitle">Submit evidence of your payment for verification by the admin team</p>
+        
+        <div class="upload-card">
+          <div class="upload-area" 
+            (dragover)="onDragOver($event)" 
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDropFile($event)"
+            [class.dragover]="isDragOver">
+            
+            <div class="upload-content">
+              <span class="icon material-symbols-outlined">cloud_upload</span>
+              <h3>Upload Payment Receipt</h3>
+              <p>Drag and drop your payment receipt here or click to select</p>
+              <input 
+                type="file" 
+                #fileInput 
+                (change)="onFileSelected($event)" 
+                accept=".pdf,.jpg,.jpeg,.png"
+                hidden
+              />
+              <button type="button" (click)="fileInput.click()" class="btn-browse">
+                <span class="icon material-symbols-outlined">folder_open</span>
+                Browse Files
+              </button>
+              <p class="file-info">Accepted formats: PDF, JPG, PNG (Max 5MB)</p>
+            </div>
+          </div>
+
+          <div class="selected-file" *ngIf="selectedPaymentFile">
+            <div class="file-info-box">
+              <span class="icon material-symbols-outlined">check_circle</span>
+              <div class="file-details">
+                <p class="file-name">{{ selectedPaymentFile.name }}</p>
+                <p class="file-size">{{ (selectedPaymentFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+              </div>
+              <button type="button" (click)="removePaymentFile()" class="btn-remove">
+                <span class="icon material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="payment-status" *ngIf="paymentVerificationStatus">
+            <div class="status-box" [ngClass]="'status-' + paymentVerificationStatus.status">
+              <span class="icon material-symbols-outlined">
+                {{ paymentVerificationStatus.status === 'verified' ? 'verified' : paymentVerificationStatus.status === 'pending' ? 'schedule' : 'error' }}
+              </span>
+              <div class="status-info">
+                <p class="status-label">{{ paymentVerificationStatus.message }}</p>
+                <p class="status-date" *ngIf="paymentVerificationStatus.verifiedAt">
+                  Verified on: {{ paymentVerificationStatus.verifiedAt | date: 'short' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            (click)="uploadPaymentProof()" 
+            class="btn-upload"
+            [disabled]="!selectedPaymentFile || isUploading"
+            *ngIf="!paymentVerificationStatus || paymentVerificationStatus.status !== 'verified'">
+            <span class="icon material-symbols-outlined">{{ isUploading ? 'hourglass_bottom' : 'upload' }}</span>
+            {{ isUploading ? 'Uploading...' : 'Submit Payment Proof' }}
+          </button>
+        </div>
+      </div>
+
+    <!-- Success Message -->
+    <div class="success-message" *ngIf="successMessage">
+      <span class="icon material-symbols-outlined">check_circle</span>
+      {{ successMessage }}
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="errorMessage">
+      <span class="icon material-symbols-outlined">error</span>
+      {{ errorMessage }}
+    </div>
+  </div>
+</div>

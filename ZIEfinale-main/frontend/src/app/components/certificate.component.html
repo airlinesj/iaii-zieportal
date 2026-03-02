@@ -1,0 +1,51 @@
+<div class="certificate-wrapper">
+  <div class="certificate-container" id="certificate">
+    <div class="border-outer">
+      <div class="border-inner">
+        
+        <div class="header">
+          <img src="assets/zielogo.png" alt="ZIE Logo" class="logo">
+          <h1>THE ZIMBABWE INSTITUTION</h1>
+          <h2>OF</h2>
+          <h3>ENGINEERS</h3>
+          <p class="founded">Founded 1944 — Incorporated 1953</p>
+        </div>
+
+        <div class="content">
+          <p class="certify-text">We hereby Certify that</p>
+          <h2 class="applicant-name">{{ applicant?.name }}</h2>
+          
+          <p class="admission-text">was admitted as</p>
+          <h2 class="membership-level">{{ applicant?.grade | uppercase }}</h2>
+          
+          <p class="division-text" *ngIf="applicant?.division">Division: <span class="division-value">{{ applicant?.division }}</span></p>
+          
+          <p class="institution-text">of the Institution</p>
+          <p class="date-row">on <span class="date-value">{{ applicant?.interviewPassedDate | date:'dd MMMM yyyy' }}</span></p>
+        </div>
+
+        <div class="footer">
+          <div class="seal"></div>
+          
+          <div class="signatures">
+              <div class="sig-line"><span>President</span></div>
+              <div class="sig-line"><span>Board Member</span></div>
+              <div class="sig-line"><span>Chief Executive Officer</span></div>
+          </div>
+        </div>
+
+        <div class="reg-number">
+          ZIE {{ applicant?.registrationNumber }}
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button (click)="downloadPDF()" class="btn-download">Download Certificate as PDF</button>
+    <button (click)="backToUpdates()" class="btn-back">Back to Updates</button>
+  </div>
+
+  <div class="error-message" *ngIf="error">{{ error }}</div>
+</div>

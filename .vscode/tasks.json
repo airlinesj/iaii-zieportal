@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "ZIEfinale-main/backend",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - ZIEfinale-main/backend",
+			"detail": "tsc"
+		}
+	]
+}

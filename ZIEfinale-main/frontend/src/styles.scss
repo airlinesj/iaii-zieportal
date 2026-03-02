@@ -1,0 +1,842 @@
+/* You can add global styles to this file, and also import other style files */
+$zie-blue: #023F82;
+$zie-gold: #B99532;
+$zie-white: #FFFFFF;
+
+// Breakpoints
+$mobile: 480px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// iPhone specific breakpoints (all models from SE through 17)
+$iphone-se: 320px;          // iPhone SE (1st gen)
+$iphone-6-8: 375px;         // iPhone 6/7/8, X, 11 Pro, 12 mini, 13 mini
+$iphone-12-13: 390px;       // iPhone 12, 13, 14, 15
+$iphone-plus: 414px;        // iPhone 6/7/8 Plus, XR, 11, XS Max
+$iphone-pro-max: 430px;     // iPhone 12/13/14/15 Pro Max
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  @media (max-width: $tablet) {
+    font-size: 14px;
+  }
+  
+  @media (max-width: $mobile) {
+    font-size: 13px;
+  }
+
+  // iPhone SE - extra small screen support
+  @media (max-width: $iphone-se) {
+    font-size: 12px;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: $zie-white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Thick border aesthetic */
+input, .card, .btn, .form-container, .upload-zone {
+  border: 2.5px solid $zie-blue !important;
+}
+
+/* Button Styles - Responsive */
+.btn-primary {
+  background-color: $zie-blue;
+  color: white;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 12px 24px;
+  border: 2.5px solid $zie-blue !important;
+  min-height: 44px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+
+  &:hover {
+    border-color: $zie-gold !important;
+    background-color: darken($zie-blue, 10%);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: $tablet) {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: $mobile) {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
+
+.btn-secondary {
+  background-color: $zie-gold;
+  color: $zie-blue;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 12px 24px;
+  border: 2.5px solid $zie-gold !important;
+  min-height: 44px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+
+  &:hover {
+    border-color: $zie-blue !important;
+    background-color: darken($zie-gold, 10%);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: $tablet) {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: $mobile) {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
+
+/* Header - Responsive */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background-color: $zie-white;
+  border-bottom: 2.5px solid $zie-gold;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1000;
+  gap: 10px;
+
+  .logo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .title {
+    margin-left: 20px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $zie-blue;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: $tablet) {
+    height: 70px;
+    padding: 0 15px;
+
+    .logo {
+      height: 50px;
+    }
+
+    .title {
+      margin-left: 10px;
+      font-size: 1.1rem;
+    }
+  }
+
+  @media (max-width: $mobile) {
+    height: 60px;
+    padding: 0 10px;
+    gap: 5px;
+
+    .logo {
+      height: 40px;
+    }
+
+    .title {
+      margin-left: 5px;
+      font-size: 0.95rem;
+      letter-spacing: 0px;
+    }
+  }
+}
+
+/* Container - Responsive */
+.container {
+  margin-top: 80px;
+  margin-left: 250px;
+  padding: 20px;
+  max-width: 1200px;
+  margin-right: auto;
+  transition: margin-left 0.3s ease;
+  min-height: calc(100vh - 80px);
+  box-sizing: border-box;
+
+  @media (max-width: $tablet) {
+    margin-left: 200px;
+    padding: 15px;
+  }
+
+  @media (max-width: $mobile) {
+    margin-left: 0;
+    padding: 12px;
+  }
+}
+
+/* Card Styles - Responsive */
+.card {
+  background-color: $zie-white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 74, 89, 0.1);
+
+  @media (max-width: $tablet) {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  @media (max-width: $mobile) {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+}
+
+/* Form Elements - Responsive */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 2.5px solid $zie-blue !important;
+  border-radius: 4px;
+  font-size: 1rem;
+  min-height: 48px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: $zie-gold !important;
+    box-shadow: 0 0 0 3px rgba(185, 149, 50, 0.1);
+  }
+
+  @media (max-width: $tablet) {
+    padding: 10px;
+    font-size: 0.95rem;
+    min-height: 44px;
+  }
+
+  @media (max-width: $mobile) {
+    padding: 12px;
+    font-size: 16px; // Prevents zoom on iOS
+    min-height: 48px;
+    margin-bottom: 12px;
+  }
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+  padding-top: 12px;
+
+  @media (max-width: $tablet) {
+    min-height: 100px;
+  }
+
+  @media (max-width: $mobile) {
+    min-height: 120px;
+    padding: 12px;
+  }
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23004A59' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 35px;
+  cursor: pointer;
+}
+
+/* Form Group - Responsive */
+.form-group {
+  margin-bottom: 15px;
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: $zie-blue;
+    font-size: 1rem;
+  }
+
+  @media (max-width: $tablet) {
+    margin-bottom: 12px;
+
+    label {
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (max-width: $mobile) {
+    margin-bottom: 10px;
+
+    label {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.success-message {
+  color: #388e3c;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* Responsive Utility Classes */
+.d-none-mobile {
+  @media (max-width: $mobile) {
+    display: none !important;
+  }
+}
+
+.d-block-mobile {
+  display: none;
+  @media (max-width: $mobile) {
+    display: block !important;
+  }
+}
+
+.d-flex-mobile {
+  display: none;
+  @media (max-width: $mobile) {
+    display: flex !important;
+  }
+}
+
+.text-center-mobile {
+  @media (max-width: $mobile) {
+    text-align: center !important;
+  }
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+
+.mb-auto {
+  margin-bottom: auto;
+}
+
+/* Grid Responsive */
+.grid-cols-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+
+  @media (max-width: $tablet) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: $mobile) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.grid-cols-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+
+  @media (max-width: $tablet) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: $mobile) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* Flexbox Responsive */
+.flex-wrap-mobile {
+  @media (max-width: $mobile) {
+    flex-wrap: wrap !important;
+  }
+}
+
+.flex-col-mobile {
+  @media (max-width: $mobile) {
+    flex-direction: column !important;
+  }
+}
+
+/* Spacing Responsive */
+.p-responsive {
+  padding: 20px;
+
+  @media (max-width: $tablet) {
+    padding: 15px;
+  }
+
+  @media (max-width: $mobile) {
+    padding: 12px;
+  }
+}
+
+.gap-responsive {
+  gap: 15px;
+
+  @media (max-width: $tablet) {
+    gap: 12px;
+  }
+
+  @media (max-width: $mobile) {
+    gap: 10px;
+  }
+}
+
+/* Typography Responsive */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: $zie-blue;
+  margin: 20px 0;
+
+  @media (max-width: $tablet) {
+    font-size: 1.8rem;
+    margin: 15px 0;
+  }
+
+  @media (max-width: $mobile) {
+    font-size: 1.4rem;
+    margin: 12px 0;
+  }
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: $zie-blue;
+  margin: 15px 0;
+
+  @media (max-width: $tablet) {
+    font-size: 1.4rem;
+    margin: 12px 0;
+  }
+
+  @media (max-width: $mobile) {
+    font-size: 1.1rem;
+    margin: 10px 0;
+  }
+}
+
+h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: $zie-blue;
+  margin: 12px 0;
+
+  @media (max-width: $tablet) {
+    font-size: 1.1rem;
+    margin: 10px 0;
+  }
+
+  @media (max-width: $mobile) {
+    font-size: 1rem;
+    margin: 8px 0;
+  }
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+
+  @media (max-width: $tablet) {
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: $mobile) {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+}
+
+/* Table Responsive */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+
+  th {
+    background-color: $zie-blue;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  tr:hover {
+    background-color: #f5f5f5;
+  }
+
+  @media (max-width: $mobile) {
+    font-size: 0.85rem;
+
+    th, td {
+      padding: 8px;
+    }
+  }
+}
+
+/* Scrollable table for mobile */
+.table-responsive {
+  overflow-x: auto;
+  margin-bottom: 15px;
+
+  @media (max-width: $mobile) {
+    margin-bottom: 10px;
+  }
+}
+
+/* Touch-friendly spacing */
+.touch-spacing {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+/* Loading spinner responsive */
+.spinner {
+  border: 3px solid $zie-gold;
+  border-top: 3px solid $zie-blue;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+
+  @media (max-width: $mobile) {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dialog Panel - Center and Above Sidebar */
+.submission-dialog-panel {
+  z-index: 10000 !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.mat-mdc-dialog-container {
+  z-index: 10000 !important;
+}
+
+.cdk-overlay-backdrop {
+  z-index: 9999 !important;
+}
+
+// Centered dialog styling
+.centered-dialog {
+  .mat-mdc-dialog-container {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-width: 90vw !important;
+    box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2), 0 24px 38px 3px rgba(0, 0, 0, 0.14), 0 9px 46px 8px rgba(0, 0, 0, 0.12) !important;
+  }
+}
+
+/* Material Components Mobile Optimization */
+::ng-deep {
+  /* Material Stepper Mobile */
+  .mat-mdc-stepper-horizontal {
+    @media (max-width: 768px) {
+      margin: 0 -8px;
+    }
+  }
+
+  .mat-mdc-step-header {
+    @media (max-width: 480px) {
+      min-width: auto !important;
+      padding: 0 8px !important;
+      font-size: 12px;
+    }
+  }
+
+  .mat-mdc-stepper-label-position-bottom .mat-mdc-step-header {
+    @media (max-width: 480px) {
+      min-height: 56px !important;
+    }
+  }
+
+  /* Material Form Fields */
+  .mat-mdc-form-field-infix {
+    @media (max-width: 480px) {
+      padding-right: 8px !important;
+    }
+  }
+
+  /* Material Dialog Mobile */
+  .mat-mdc-dialog-container {
+    @media (max-width: 480px) {
+      max-width: calc(100vw - 16px) !important;
+      max-height: calc(100vh - 32px) !important;
+      border-radius: 8px !important;
+    }
+  }
+
+  /* Material Select Mobile */
+  .mat-mdc-select-panel {
+    @media (max-width: 480px) {
+      max-width: calc(100vw - 16px) !important;
+    }
+  }
+
+  /* Material Datepicker Mobile */
+  .mat-datepicker-content {
+    @media (max-width: 480px) {
+      max-width: calc(100vw - 16px) !important;
+    }
+  }
+
+  /* Ensure inputs are properly sized */
+  .mat-mdc-text-field-wrapper input,
+  .mat-mdc-text-field-wrapper textarea {
+    min-height: 48px !important;
+    @media (max-width: 480px) {
+      min-height: 48px !important;
+      font-size: 16px !important;
+    }
+  }
+}
+
+/* iPhone Specific Optimizations (SE through 17) */
+
+/* iPhone SE (320px) - Smallest screen support */
+@media (max-width: 320px) {
+  body {
+    font-size: 14px;
+  }
+
+  .header {
+    height: 56px !important;
+    padding: 0 8px !important;
+    gap: 3px !important;
+
+    .logo {
+      height: 36px !important;
+    }
+
+    .title {
+      font-size: 0.85rem !important;
+      margin-left: 3px !important;
+    }
+  }
+
+  .btn-primary, .btn-secondary, button {
+    padding: 10px 10px !important;
+    font-size: 0.85rem !important;
+    min-height: 44px !important;
+  }
+
+  input, select, textarea {
+    padding: 10px 8px !important;
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .form-group {
+    margin-bottom: 10px !important;
+
+    label {
+      font-size: 0.85rem !important;
+      margin-bottom: 4px !important;
+    }
+  }
+
+  .container {
+    padding: 8px !important;
+  }
+
+  .card {
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  table {
+    min-width: 300px !important;
+    font-size: 10px !important;
+  }
+
+  th, td {
+    padding: 4px 2px !important;
+  }
+}
+
+/* iPhone 6/7/8 and mini models (375px) */
+@media (max-width: 375px) {
+  .header {
+    height: 60px;
+    padding: 0 10px;
+  }
+
+  .logo {
+    height: 40px;
+  }
+
+  .title {
+    font-size: 0.9rem;
+    margin-left: 5px;
+  }
+
+  .btn-primary, .btn-secondary, button {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    min-height: 44px;
+  }
+
+  input, select, textarea {
+    padding: 10px 10px;
+    font-size: 16px; // Prevent iOS zoom
+  }
+}
+
+/* iPhone 12/13/14/15 standard models (390px) */
+@media (max-width: 390px) {
+  input, select, textarea {
+    font-size: 16px; // Prevent iOS zoom on focus
+  }
+
+  .btn-primary, .btn-secondary {
+    min-height: 46px;
+  }
+}
+
+/* iPhone Plus and Pro Max models (414px+) */
+@media (min-width: 414px) and (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+
+  .header {
+    height: 64px;
+  }
+
+  .container {
+    padding: 14px;
+  }
+
+  input, select, textarea {
+    min-height: 46px;
+  }
+}
+
+/* General iPhone notch/safe area handling for all models */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: max(0px, env(safe-area-inset-top, 0px));
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(0px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .header {
+    padding-left: max(0px, env(safe-area-inset-left, 10px));
+    padding-right: max(0px, env(safe-area-inset-right, 10px));
+  }
+
+  .container {
+    padding-left: max(12px, env(safe-area-inset-left, 12px));
+    padding-right: max(12px, env(safe-area-inset-right, 12px));
+  }
+
+  .form-container {
+    padding-left: max(12px, env(safe-area-inset-left, 12px));
+    padding-right: max(12px, env(safe-area-inset-right, 12px));
+  }
+}
+
+/* iPhone specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific code */
+  input[type="date"], input[type="time"], input[type="datetime-local"] {
+    line-height: 2.4; // Better display in Safari date picker
+    font-size: 16px; // Prevent zoom
+  }
+
+  textarea {
+    resize: vertical; // Disable pinch-to-zoom on textarea
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  button, .btn-primary, .btn-secondary, a {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Prevent unwanted zoom on iPhone */
+  select, input, textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 4px;
+  }
+
+  /* Fix for iPhone keyboard issues */
+  input:focus, textarea:focus, select:focus {
+    font-size: 16px; // Prevent viewport zoom on focus
+    -webkit-zoom: 1; // Prevent zoom
+  }
+}
