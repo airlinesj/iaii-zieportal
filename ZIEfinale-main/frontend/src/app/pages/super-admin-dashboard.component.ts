@@ -5,11 +5,12 @@ import { Router, RouterModule } from '@angular/router';
 import { ApplicationService } from '../services/application.service';
 import { AuthService } from '../services/auth.service';
 import { ApplicationStatsComponent, MembershipGradeStats } from '../components/application-stats.component';
+import { ExchangeRateApprovalManagementComponent } from '../components/exchange-rate-approval-management.component';
 
 @Component({
   selector: 'app-super-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ApplicationStatsComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ApplicationStatsComponent, ExchangeRateApprovalManagementComponent],
   template: `
     <div class="dashboard-wrapper">
       <div class="header-section">
@@ -167,6 +168,9 @@ import { ApplicationStatsComponent, MembershipGradeStats } from '../components/a
           <div *ngIf="successMessage" class="success-message">✓ {{ successMessage }}</div>
           <div *ngIf="errorMessage" class="error-message">✗ {{ errorMessage }}</div>
         </div>
+
+        <!-- Exchange Rate Approval Section -->
+        <app-exchange-rate-approval-management></app-exchange-rate-approval-management>
       </div>
     </div>
   `,

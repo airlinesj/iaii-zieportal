@@ -7,11 +7,12 @@ import { AuthService } from '../services/auth.service';
 import { MembershipService } from '../services/membership.service';
 import { ApplicationStatsComponent, MembershipGradeStats } from '../components/application-stats.component';
 import { RefereeResponsesComponent } from '../components/referee-responses.component';
+import { ExchangeRateRequestComponent } from '../components/exchange-rate-request.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ApplicationStatsComponent, RefereeResponsesComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ApplicationStatsComponent, RefereeResponsesComponent, ExchangeRateRequestComponent],
   template: `
     <div class="dashboard-wrapper">
       <div class="header-section">
@@ -87,58 +88,8 @@ import { RefereeResponsesComponent } from '../components/referee-responses.compo
         <!-- Referee Responses Section -->
         <app-referee-responses></app-referee-responses>
 
-        <!-- Exchange Rate Management Section -->
-        <div class="exchange-rate-section">
-          <div class="exchange-rate-card">
-            <div class="card-header">
-              <h2>Exchange Rate Management (USD ↔ ZWG)</h2>
-            </div>
-            <div class="card-content">
-              <div class="rate-display">
-                <div class="current-rate">
-                  <span class="label">Current Rate:</span>
-                  <span class="rate-value">1 USD = {{ exchangeRate | number: '1.2-2' }} ZWG</span>
-                  <span class="rate-source" [class.manual]="isManualRate">{{ isManualRate ? '(Manually Set)' : '(Auto-fetched)' }}</span>
-                </div>
-              </div>
-
-              <div class="rate-form">
-                <div class="form-group">
-                  <label for="newRate">Set New Exchange Rate:</label>
-                  <input
-                    type="number"
-                    id="newRate"
-                    [(ngModel)]="newExchangeRate"
-                    placeholder="e.g., 26.5"
-                    step="0.01"
-                    min="0"
-                    max="1000"
-                    [disabled]="isLoadingRate"
-                  />
-                </div>
-
-                <button
-                  class="btn-update-rate"
-                  (click)="updateExchangeRate()"
-                  [disabled]="isLoadingRate || !newExchangeRate || newExchangeRate <= 0"
-                >
-                  {{ isLoadingRate ? 'Updating...' : 'Update Rate' }}
-                </button>
-
-                <div *ngIf="rateUpdateMessage" class="message" [class.success]="rateUpdateSuccess">
-                  {{ rateUpdateMessage }}
-                </div>
-              </div>
-
-              <div class="rate-info">
-                <p>
-                  <strong>Note:</strong> The current exchange rate is {{ isManualRate ? 'manually set' : 'auto-fetched from live sources' }} 
-                  and will be used for all fee calculations in ZWG.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Exchange Rate Request Section -->
+        <app-exchange-rate-request></app-exchange-rate-request>
       </div>
     </div>
   `,
