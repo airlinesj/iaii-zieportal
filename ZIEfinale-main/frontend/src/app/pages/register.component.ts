@@ -35,11 +35,34 @@ import { AuthService } from '../services/auth.service';
               type="password"
               id="password"
               formControlName="password"
-              placeholder="Enter a strong password (min 6 characters)"
+              (input)="updatePasswordRequirements(registerForm.get('password')?.value)"
+              placeholder="Create a strong password"
               class="form-input"
             />
-            <div class="error-message" *ngIf="registerForm.get('password')?.errors">
-              Password must be at least 6 characters
+            <div class="password-requirements">
+              <div class="requirement" [class.met]="passwordChecks.minLength">
+                <span class="check-icon">{{ passwordChecks.minLength ? '✓' : '○' }}</span>
+                At least 12 characters
+              </div>
+              <div class="requirement" [class.met]="passwordChecks.hasUppercase">
+                <span class="check-icon">{{ passwordChecks.hasUppercase ? '✓' : '○' }}</span>
+                Contains uppercase letter (A-Z)
+              </div>
+              <div class="requirement" [class.met]="passwordChecks.hasLowercase">
+                <span class="check-icon">{{ passwordChecks.hasLowercase ? '✓' : '○' }}</span>
+                Contains lowercase letter (a-z)
+              </div>
+              <div class="requirement" [class.met]="passwordChecks.hasNumber">
+                <span class="check-icon">{{ passwordChecks.hasNumber ? '✓' : '○' }}</span>
+                Contains number (0-9)
+              </div>
+              <div class="requirement" [class.met]="passwordChecks.hasSpecial">
+                <span class="check-icon">{{ passwordChecks.hasSpecial ? '✓' : '○' }}</span>
+                Contains special character (&#64;$!%*?&)
+              </div>
+            </div>
+            <div class="error-message" *ngIf="registerForm.get('password')?.errors && registerForm.get('password')?.touched">
+              Password requirements not met
             </div>
           </div>
 
@@ -73,16 +96,12 @@ import { AuthService } from '../services/auth.service';
               <option value="Applicant">Applicant (Membership Seeker)</option>
               <option value="Admin">Admin (Staff Only)</option>
               <option value="SuperAdmin">Super Admin (Leadership Only)</option>
-              <option value="Audit">Audit (Audit Trail Access)</option>
             </select>
             <p class="admin-note" *ngIf="registerForm.get('role')?.value === 'Admin'">
               <strong>Admin accounts require an email address containing &#64;admin</strong> (e.g., admin&#64;admin.com)
             </p>
             <p class="admin-note" *ngIf="registerForm.get('role')?.value === 'SuperAdmin'">
               <strong>Super Admin accounts require an email address containing &#64;superadmin</strong> (e.g., superadmin&#64;superadmin.com)
-            </p>
-            <p class="admin-note" *ngIf="registerForm.get('role')?.value === 'Audit'">
-              <strong>Audit accounts require an email address containing &#64;admin.audit</strong> (e.g., auditor&#64;admin.audit)
             </p>
           </div>
 
@@ -113,6 +132,8 @@ import { AuthService } from '../services/auth.service';
       background-color: #FFFFFF;
       padding: 20px;
       margin-top: 80px;
+      position: relative;
+      z-index: 10;
     }
 
     .register-card {
@@ -214,6 +235,43 @@ import { AuthService } from '../services/auth.service';
       color: #d32f2f;
       font-size: 12px;
       margin-top: 5px;
+    }
+
+    .password-requirements {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .requirement {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      color: #666;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      &.met {
+        color: #388e3c;
+        font-weight: 500;
+      }
+    }
+
+    .check-icon {
+      display: inline-block;
+      width: 20px;
+      margin-right: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .requirement.met .check-icon {
+      color: #388e3c;
     }
 
     .success-message {
@@ -393,6 +451,15 @@ export class RegisterComponent implements OnInit {
   isAdminModeActive = false;
   private keySequence: string[] = [];
   private adminKeySequence = ['shift', 'a', 'd', 'm', 'i', 'n']; // Ctrl+Shift+A then d,m,i,n
+  
+  // Password requirement tracking
+  passwordChecks = {
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecial: false
+  };
   
   countries = [
     'Afghanistan',
@@ -602,10 +669,49 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, this.strongPasswordValidator.bind(this)]],
       country: ['', Validators.required],
       role: ['Applicant'],
     });
+  }
+
+  updatePasswordRequirements(password: string): void {
+    if (!password) {
+      this.passwordChecks = {
+        minLength: false,
+        hasUppercase: false,
+        hasLowercase: false,
+        hasNumber: false,
+        hasSpecial: false
+      };
+      return;
+    }
+
+    this.passwordChecks = {
+      minLength: password.length >= 12,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[@$!%*?&]/.test(password)
+    };
+  }
+
+  strongPasswordValidator(control: any): { [key: string]: boolean } | null {
+    const password = control.value;
+    if (!password) {
+      return null;
+    }
+
+    const checks = {
+      minLength: password.length >= 12,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[@$!%*?&]/.test(password)
+    };
+
+    const allChecksPassed = Object.values(checks).every(check => check === true);
+    return allChecksPassed ? null : { weakPassword: true };
   }
 
   onRoleChange(): void {
@@ -699,7 +805,17 @@ export class RegisterComponent implements OnInit {
         console.error('Error message:', error.error?.message);
         console.error('Form value:', this.registerForm.value);
         this.isLoading = false;
-        this.errorMessage = error.error?.message || error.error?.error || 'Registration failed. Please try again.';
+        
+        // Handle validation errors from server
+        if (error.error?.errors && Array.isArray(error.error.errors)) {
+          const validationErrors = error.error.errors;
+          const messages = validationErrors.map((e: any) => e.msg).join('; ');
+          this.errorMessage = `❌ ${messages}`;
+        } else if (error.error?.message) {
+          this.errorMessage = error.error.message;
+        } else {
+          this.errorMessage = '❌ Registration failed. Please try again.';
+        }
       },
     });
   }

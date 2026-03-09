@@ -7,20 +7,12 @@ import { AuditService } from '../services/AuditService';
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
-    console.log('\n=== REGISTER ENDPOINT CALLED ===');
-    console.log('Request body:', req.body);
-    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, password, role, country } = req.body;
-    console.log('Extracted fields:');
-    console.log('  - email:', email);
-    console.log('  - role:', role);
-    console.log('  - country:', country);
-    console.log('  - password length:', password?.length);
 
     // Security: Validate role and email
     let finalRole = 'Applicant'; // Default role
@@ -169,12 +161,8 @@ export const login = async (req: AuthRequest, res: Response) => {
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      console.warn('⚠️ ❌ User not found:', email);
-      console.warn('  - Attempted email:', email);
-      console.warn('  - Check if user exists in database');
       return res.status(401).json({ 
-        message: 'Invalid credentials',
-        debug: `User not found with email: ${email}`
+        message: 'Invalid credentials'
       });
     }
 
@@ -197,22 +185,20 @@ export const login = async (req: AuthRequest, res: Response) => {
         user.lockedUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
         await user.save();
 
-        // Log suspicious activity
-        if (user.role === 'Admin' || user.role === 'SuperAdmin') {
-          await AuditService.logAction(
-            user._id.toString(),
-            user.email,
-            'OTHER',
-            'User',
-            user._id.toString(),
-            `Account locked due to 5 failed login attempts`,
-            {
-              status: 'FAILURE',
-              errorMessage: 'Account locked - too many failed attempts',
-              ipAddress: req.ip,
-            }
-          );
-        }
+        // Log suspicious activity for ALL account types
+        await AuditService.logAction(
+          user._id.toString(),
+          user.email,
+          'OTHER',
+          'User',
+          user._id.toString(),
+          `Account locked due to 5 failed login attempts`,
+          {
+            status: 'FAILURE',
+            errorMessage: 'Account locked - too many failed attempts',
+            ipAddress: req.ip,
+          }
+        );
 
         return res.status(401).json({
           message: 'Account locked due to too many failed login attempts. Try again in 30 minutes.',
@@ -264,6 +250,13 @@ export const login = async (req: AuthRequest, res: Response) => {
       needsSave = true;
     }
     
+    // For non-applicant accounts: ensure applicationType is undefined (not null)
+    if (user.role !== 'Applicant' && user.applicationType === null) {
+      console.log('⚠ Non-applicant account with null applicationType, setting to undefined');
+      user.applicationType = undefined;
+      needsSave = true;
+    }
+    
     if (needsSave) {
       await user.save(); // Save the migration
       console.log('✓ Migrated old user on login:', email);
@@ -290,9 +283,8 @@ export const login = async (req: AuthRequest, res: Response) => {
     console.log('  - dashboard:', classification.dashboard);
 
     // Log the successful login to audit trail
-    if (user.role === 'Admin' || user.role === 'SuperAdmin') {
-      await AuditService.logLogin(user._id.toString(), user.email, user.email, req);
-    }
+    // Log ALL logins (for complete audit trail coverage)
+    await AuditService.logLogin(user._id.toString(), user.email, user.email, req);
 
     const response = {
       message: 'Login successful',

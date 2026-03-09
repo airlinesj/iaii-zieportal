@@ -21,14 +21,17 @@ const auditAccessMiddleware = async (req: AuthRequest, res: Response, next: any)
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if user is SuperAdmin or has audit trail access
-    if (user.role !== 'SuperAdmin' && !user.canAccessAuditTrail) {
-      return res.status(403).json({
-        message: 'You do not have permission to access audit logs.',
-      });
+    // Only auditors (audit account type) can access audit logs
+    if (user.role === 'Admin' && user.accountType === 'audit') {
+      // Only audit-type admin accounts can access
+      next();
+      return;
     }
 
-    next();
+    // All other users (admins, superadmins, applicants, members) are blocked
+    return res.status(403).json({
+      message: 'Only auditors can access audit logs.',
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error checking audit access', error });
   }
@@ -251,13 +254,13 @@ router.get('/export/pdf', authMiddleware, auditAccessMiddleware, async (req: Aut
   }
 });
 
-// Get retention policy stats (SuperAdmin or Audit Admin)
+// Get retention policy stats (Auditor only)
 router.get('/retention/stats', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || (user.role !== 'SuperAdmin' && !user.canAccessAuditTrail)) {
+    if (!user || user.role !== 'Admin' || user.accountType !== 'audit') {
       return res.status(403).json({
-        message: 'Only SuperAdmins or Audit Admins can view retention policy stats.',
+        message: 'Only auditors can view retention policy stats.',
       });
     }
 
@@ -274,13 +277,13 @@ router.get('/retention/stats', authMiddleware, async (req: AuthRequest, res: Res
   }
 });
 
-// Manually trigger retention policy (SuperAdmin or Audit Admin)
+// Manually trigger retention policy (Auditor only)
 router.post('/retention/apply', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || (user.role !== 'SuperAdmin' && !user.canAccessAuditTrail)) {
+    if (!user || user.role !== 'Admin' || user.accountType !== 'audit') {
       return res.status(403).json({
-        message: 'Only SuperAdmins or Audit Admins can trigger retention policies.',
+        message: 'Only auditors can trigger retention policies.',
       });
     }
 
@@ -307,9 +310,9 @@ router.post('/retention/apply', authMiddleware, async (req: AuthRequest, res: Re
 router.get('/admin/audit-admins', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || (user.role !== 'SuperAdmin' && !user.canAccessAuditTrail)) {
+    if (!user || !(user.role === 'Admin' && user.accountType === 'audit')) {
       return res.status(403).json({
-        message: 'Only SuperAdmins or Audit Admins can manage audit permissions.',
+        message: 'Only auditors can manage audit permissions.',
       });
     }
 
@@ -334,9 +337,9 @@ router.get('/admin/audit-admins', authMiddleware, async (req: AuthRequest, res: 
 router.post('/admin/grant-access/:adminId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || user.role !== 'SuperAdmin') {
+    if (!user || user.role !== 'Admin' || user.accountType !== 'audit') {
       return res.status(403).json({
-        message: 'Only SuperAdmins can grant audit permissions.',
+        message: 'Only auditors can grant audit permissions.',
       });
     }
 
@@ -371,9 +374,9 @@ router.post('/admin/grant-access/:adminId', authMiddleware, async (req: AuthRequ
 router.post('/admin/revoke-access/:adminId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || user.role !== 'SuperAdmin') {
+    if (!user || user.role !== 'Admin' || user.accountType !== 'audit') {
       return res.status(403).json({
-        message: 'Only SuperAdmins can revoke audit permissions.',
+        message: 'Only auditors can revoke audit permissions.',
       });
     }
 
@@ -402,9 +405,9 @@ router.post('/admin/revoke-access/:adminId', authMiddleware, async (req: AuthReq
 router.post('/admin/unlock/:adminId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user || user.role !== 'SuperAdmin') {
+    if (!user || user.role !== 'Admin' || user.accountType !== 'audit') {
       return res.status(403).json({
-        message: 'Only SuperAdmins can unlock accounts.',
+        message: 'Only auditors can unlock accounts.',
       });
     }
 

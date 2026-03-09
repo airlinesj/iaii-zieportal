@@ -13,6 +13,7 @@ import RegistrationNumberService from '../services/RegistrationNumberService';
 import { deleteUploadedFile } from '../middleware/fileUpload';
 import { AuditService } from '../services/AuditService';
 import { ApplicationValidationService } from '../services/ApplicationValidationService';
+import GradeProgressionService from '../services/GradeProgressionService';
 import { User } from '../models/User';
 
 export const createApplication = async (req: AuthRequest, res: Response) => {
@@ -111,6 +112,25 @@ export const createApplication = async (req: AuthRequest, res: Response) => {
     if (!grade) {
       return res.status(400).json({ message: 'Invalid membership grade' });
     }
+
+    // Validate grade progression - ensure user can apply for this grade
+    console.log('🎖️  Validating grade progression for user:', req.userId);
+    const applicantUser = await User.findById(req.userId);
+    if (!applicantUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const gradeValidation = GradeProgressionService.validateGradeApplication(applicantUser, chosenGrade);
+    if (!gradeValidation.isValid) {
+      console.warn('⚠️  Grade progression validation failed:', gradeValidation.error);
+      return res.status(400).json({ 
+        message: 'Grade application not allowed',
+        details: gradeValidation.error,
+        currentGrade: applicantUser.currentMembershipGrade || 'None (First application must be for Technician)',
+        requestedGrade: chosenGrade,
+      });
+    }
+    console.log('✓ Grade progression validation passed');
 
     // Calculate application fee
     const exchangeRate = parseFloat(process.env.EXCHANGE_RATE || '0.015');
@@ -397,6 +417,25 @@ export const createExpatriateApplication = async (req: AuthRequest, res: Respons
     if (!grade) {
       return res.status(400).json({ message: 'Invalid membership grade' });
     }
+
+    // Validate grade progression - ensure user can apply for this grade
+    console.log('🎖️  Validating grade progression for expatriate user:', req.userId);
+    const expatriateUser = await User.findById(req.userId);
+    if (!expatriateUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const expatrateGradeValidation = GradeProgressionService.validateGradeApplication(expatriateUser, membershipGrade);
+    if (!expatrateGradeValidation.isValid) {
+      console.warn('⚠️  Expatriate grade progression validation failed:', expatrateGradeValidation.error);
+      return res.status(400).json({ 
+        message: 'Grade application not allowed',
+        details: expatrateGradeValidation.error,
+        currentGrade: expatriateUser.currentMembershipGrade || 'None (First application must be for Technician)',
+        requestedGrade: membershipGrade,
+      });
+    }
+    console.log('✓ Expatriate grade progression validation passed');
 
     // Calculate application fee
     const exchangeRate = parseFloat(process.env.EXCHANGE_RATE || '0.015');
@@ -1534,6 +1573,32 @@ export const confirmExpatriateAdmission = async (req: AuthRequest, res: Response
           adminName: admin?.username,
         }
       );
+    }
+
+    // If Super Admin is admitting the applicant, update the user's membership status and grade
+    if (status === 'admitted' && req.userRole === 'SuperAdmin') {
+      console.log('🎖️  Assigning grade to user after Super Admin approval...');
+      try {
+        const applicantUser = await User.findById(application.userId);
+        if (applicantUser) {
+          await GradeProgressionService.assignGradeToUser(
+            application.userId,
+            application.chosenGrade as any,
+            application.chosenSpecialistDivision,
+            application._id,
+            req.userId as string,
+            admin?.email || '',
+            application.registrationNumber
+          );
+          console.log('✓ User membership grade assigned successfully');
+          console.log(`  - New Grade: ${application.chosenGrade}`);
+          console.log(`  - User is now addressed as: Member`);
+          console.log(`  - Membership Status: active`);
+        }
+      } catch (gradeError) {
+        console.error('⚠️  Error assigning grade to user:', gradeError);
+        // Don't fail the entire request if grade assignment fails
+      }
     }
 
     await application.save();

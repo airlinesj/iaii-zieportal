@@ -1,14 +1,38 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+export interface IGradeProgressionRecord {
+  grade: 'Technician' | 'Technologist' | 'Member' | 'Fellow';
+  division: string;
+  assignedAt: Date;
+  assignedBy: mongoose.Types.ObjectId;
+  assignedByEmail: string;
+  applicationId: mongoose.Types.ObjectId;
+  registrationNumber?: string;
+}
+
+export interface IPaymentRecord {
+  amount: number;
+  paidAt: Date;
+  grade: 'Technician' | 'Technologist' | 'Member' | 'Fellow';
+  paymentType: 'application' | 'membership_renewal';
+}
+
 export interface IUser extends Document {
   email: string;
   password_hash: string;
-  role: 'Applicant' | 'Admin' | 'SuperAdmin';
-  accountType: 'applicant' | 'admin' | 'audit' | 'superadmin';
+  role: 'Applicant' | 'Admin' | 'SuperAdmin' | 'Member';
+  accountType: 'applicant' | 'admin' | 'audit' | 'superadmin' | 'member';
   country: string;
-  applicationType: 'local' | 'expatriate';
-  userClassification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit';
+  applicationType?: 'local' | 'expatriate';
+  userClassification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit' | 'member';
+  membershipStatus: 'applicant' | 'member';
+  currentMembershipGrade?: 'Technician' | 'Technologist' | 'Member' | 'Fellow';
+  currentMembershipDivision?: string;
+  gradeProgressionHistory: IGradeProgressionRecord[];
+  paymentHistory: IPaymentRecord[];
+  lastAnnualFeeRenewalAt?: Date;
+  annualFeeAmount?: number;
   canAccessAuditTrail: boolean;
   failedLoginAttempts: number;
   lastFailedLogin?: Date;
@@ -35,7 +59,7 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['Applicant', 'Admin', 'SuperAdmin'],
+      enum: ['Applicant', 'Admin', 'SuperAdmin', 'Member'],
       default: 'Applicant',
     },
     country: {
@@ -44,14 +68,80 @@ const userSchema = new Schema<IUser>(
     },
     applicationType: {
       type: String,
-      enum: ['local', 'expatriate'],
+      enum: {
+        values: ['local', 'expatriate'],
+        message: '{VALUE} is not a valid applicationType',
+      },
       sparse: true,
+      default: undefined,
+      validate: {
+        validator: function(value: any) {
+          // Allow null, undefined, and valid enum values
+          return value === null || value === undefined || ['local', 'expatriate'].includes(value);
+        },
+        message: 'applicationType must be null, undefined, "local", or "expatriate"',
+      },
     },
     userClassification: {
       type: String,
-      enum: ['local_applicant', 'expatriate_applicant', 'admin', 'superadmin'],
+      enum: ['local_applicant', 'expatriate_applicant', 'admin', 'superadmin', 'audit', 'member'],
       required: true,
       default: 'local_applicant',
+    },
+    membershipStatus: {
+      type: String,
+      enum: ['applicant', 'member'],
+      default: 'applicant',
+    },
+    currentMembershipGrade: {
+      type: String,
+      enum: ['Technician', 'Technologist', 'Member', 'Fellow'],
+      sparse: true,
+    },
+    currentMembershipDivision: {
+      type: String,
+      sparse: true,
+    },
+    gradeProgressionHistory: [
+      {
+        grade: {
+          type: String,
+          enum: ['Technician', 'Technologist', 'Member', 'Fellow'],
+          required: true,
+        },
+        division: String,
+        assignedAt: { type: Date, required: true },
+        assignedBy: mongoose.Types.ObjectId,
+        assignedByEmail: String,
+        applicationId: mongoose.Types.ObjectId,
+        registrationNumber: String,
+      },
+    ],
+    paymentHistory: [
+      {
+        amount: { type: Number, required: true },
+        paidAt: { type: Date, required: true, default: Date.now },
+        grade: {
+          type: String,
+          enum: ['Technician', 'Technologist', 'Member', 'Fellow'],
+          required: true,
+        },
+        paymentType: {
+          type: String,
+          enum: ['application', 'membership_renewal'],
+          required: true,
+        },
+      },
+    ],
+    lastAnnualFeeRenewalAt: {
+      type: Date,
+      sparse: true,
+      description: 'Date of last annual membership fee renewal',
+    },
+    annualFeeAmount: {
+      type: Number,
+      sparse: true,
+      description: 'Last recorded annual membership fee amount',
     },
     canAccessAuditTrail: {
       type: Boolean,
@@ -60,7 +150,7 @@ const userSchema = new Schema<IUser>(
     },
     accountType: {
       type: String,
-      enum: ['applicant', 'admin', 'audit', 'superadmin'],
+      enum: ['applicant', 'admin', 'audit', 'superadmin', 'member'],
       default: 'applicant',
     },
     failedLoginAttempts: {

@@ -38,9 +38,9 @@ export const routes: Routes = [
   { path: 'super-admin-dashboard', component: SuperAdminDashboardComponent, canActivate: [RoleGuard], data: { roles: ['SuperAdmin'] } },
   { path: 'applications-list', component: ApplicationsListComponent, canActivate: [RoleGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'application/:id', component: AdminApplicationDetailsComponent, canActivate: [RoleGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
-  { path: 'audit-trail', component: AuditTrailComponent, canActivate: [RoleGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'audit-trail', component: AuditTrailComponent, canActivate: [RoleGuard], data: { roles: ['Admin'], accountType: 'audit' } },
   { path: 'analytics', component: AnalyticsComponent, canActivate: [RoleGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
-  { path: 'audit-management', component: AuditManagementComponent, canActivate: [RoleGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'audit-management', component: AuditManagementComponent, canActivate: [RoleGuard], data: { roles: ['Admin'], accountType: 'audit' } },
   { path: '**', redirectTo: '/' },
 ];
 

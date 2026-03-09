@@ -5,10 +5,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
 import authRoutes from './routes/authRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import refereeRoutes from './routes/sponsorRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import membershipRoutes from './routes/membershipRoutes';
 import { initializeDefaultGrades } from './models/MembershipGrade';
 import { AuditRetentionService } from './services/AuditRetentionService';
 import { validateRedirectUrl, addRedirectHelper } from './middleware/redirectValidation';
@@ -65,12 +68,48 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 3600 // Cache CORS preflight for 1 hour
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Security middleware
-app.use(validateRedirectUrl);
-app.use(addRedirectHelper);
+// Data sanitization middleware (prevent NoSQL injection)
+app.use(mongoSanitize());
+
+// Rate limiting middleware (disabled in development for testing)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per windowMs (much higher for dev/testing)
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV !== 'production', // Skip rate limiting in development
+});
+
+// Stricter rate limit for auth endpoints (login/register)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 5 : 100, // 5 in production, 100 in development
+  message: 'Too many login attempts, please try again later.',
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// HTTPS enforcement in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
+
+app.use(limiter);
+
+// Apply auth rate limiter to auth routes
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Serve uploaded files with access control
 // Protected file download route
@@ -114,6 +153,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/referees', refereeRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/membership', membershipRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -138,11 +178,17 @@ app.use((err: any, req: Request, res: Response, next: any) => {
   next(err);
 });
 
-// Error handling middleware
+// Error handling middleware - Never expose internal errors to clients
 app.use((err: any, req: Request, res: Response, next: Function) => {
-  console.error('=== Server Error ===');
-  console.error('Error:', err);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
+  console.error('Server Error:', err.message);
+  
+  // Don't send error details to client in production
+  const isProduction = process.env.NODE_ENV === 'production';
+  const errorResponse = isProduction 
+    ? { message: 'Internal server error' }
+    : { message: 'Internal server error', error: err.message };
+  
+  res.status(500).json(errorResponse);
 });
 
 // Start server

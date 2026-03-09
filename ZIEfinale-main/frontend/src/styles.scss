@@ -598,66 +598,64 @@ table {
 }
 
 /* Material Components Mobile Optimization */
-::ng-deep {
-  /* Material Stepper Mobile */
-  .mat-mdc-stepper-horizontal {
-    @media (max-width: 768px) {
-      margin: 0 -8px;
-    }
+/* Material Stepper Mobile */
+.mat-mdc-stepper-horizontal {
+  @media (max-width: 768px) {
+    margin: 0 -8px;
   }
+}
 
-  .mat-mdc-step-header {
-    @media (max-width: 480px) {
-      min-width: auto !important;
-      padding: 0 8px !important;
-      font-size: 12px;
-    }
+.mat-mdc-step-header {
+  @media (max-width: 480px) {
+    min-width: auto !important;
+    padding: 0 8px !important;
+    font-size: 12px;
   }
+}
 
-  .mat-mdc-stepper-label-position-bottom .mat-mdc-step-header {
-    @media (max-width: 480px) {
-      min-height: 56px !important;
-    }
+.mat-mdc-stepper-label-position-bottom .mat-mdc-step-header {
+  @media (max-width: 480px) {
+    min-height: 56px !important;
   }
+}
 
-  /* Material Form Fields */
-  .mat-mdc-form-field-infix {
-    @media (max-width: 480px) {
-      padding-right: 8px !important;
-    }
+/* Material Form Fields */
+.mat-mdc-form-field-infix {
+  @media (max-width: 480px) {
+    padding-right: 8px !important;
   }
+}
 
-  /* Material Dialog Mobile */
-  .mat-mdc-dialog-container {
-    @media (max-width: 480px) {
-      max-width: calc(100vw - 16px) !important;
-      max-height: calc(100vh - 32px) !important;
-      border-radius: 8px !important;
-    }
+/* Material Dialog Mobile */
+.mat-mdc-dialog-container {
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 32px) !important;
+    border-radius: 8px !important;
   }
+}
 
-  /* Material Select Mobile */
-  .mat-mdc-select-panel {
-    @media (max-width: 480px) {
-      max-width: calc(100vw - 16px) !important;
-    }
+/* Material Select Mobile */
+.mat-mdc-select-panel {
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 16px) !important;
   }
+}
 
-  /* Material Datepicker Mobile */
-  .mat-datepicker-content {
-    @media (max-width: 480px) {
-      max-width: calc(100vw - 16px) !important;
-    }
+/* Material Datepicker Mobile */
+.mat-datepicker-content {
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 16px) !important;
   }
+}
 
-  /* Ensure inputs are properly sized */
-  .mat-mdc-text-field-wrapper input,
-  .mat-mdc-text-field-wrapper textarea {
+/* Ensure inputs are properly sized */
+.mat-mdc-text-field-wrapper input,
+.mat-mdc-text-field-wrapper textarea {
+  min-height: 48px !important;
+  @media (max-width: 480px) {
     min-height: 48px !important;
-    @media (max-width: 480px) {
-      min-height: 48px !important;
-      font-size: 16px !important;
-    }
+    font-size: 16px !important;
   }
 }
 
@@ -837,6 +835,7 @@ table {
   /* Fix for iPhone keyboard issues */
   input:focus, textarea:focus, select:focus {
     font-size: 16px; // Prevent viewport zoom on focus
+    zoom: 1; // Standard zoom property
     -webkit-zoom: 1; // Prevent zoom
   }
 }

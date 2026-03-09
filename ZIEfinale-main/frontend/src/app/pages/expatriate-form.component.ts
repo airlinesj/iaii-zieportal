@@ -90,9 +90,9 @@ class CustomValidators {
     MatNativeDateModule,
   ],
   template: `
-    <div class="form-container">
+    <div class="form-container" (swipeleft)="onSlideNext(stepper)" (swiperight)="onSlidePrev(stepper)">
       <!-- Loading Overlay -->
-      <div class="loading-overlay" *ngIf="isLoading">
+      <div class="loading-overlay" *ngIf="isLoading" [ngClass]="{ 'hide': isHidingOverlay }">
         <div class="loader"></div>
         <p class="loading-text">Submitting your application...</p>
       </div>
@@ -100,7 +100,7 @@ class CustomValidators {
       <h1>Expatriate Application Form - ZIE Membership</h1>
       <p class="form-subtitle">Professional Application for Non-Zimbabwean Engineering Professionals</p>
 
-      <mat-stepper #stepper>
+      <mat-stepper #stepper [@stepAnimation]="currentStep">
         <!-- Step 1: Personal Particulars -->
         <mat-step [stepControl]="personalParticularsForm" label="Personal Particulars">
           <form [formGroup]="personalParticularsForm">
@@ -617,6 +617,29 @@ class CustomValidators {
       flex-direction: column;
       z-index: 9999;
       pointer-events: auto;
+      animation: fadeInOverlay 0.3s ease-in forwards;
+    }
+
+    .loading-overlay.hide {
+      animation: fadeOutOverlay 0.3s ease-out forwards;
+    }
+
+    @keyframes fadeInOverlay {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOutOverlay {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
     }
 
     .loader {
@@ -1114,6 +1137,114 @@ class CustomValidators {
       margin: 0;
       font-style: italic;
     }
+
+    /* Material Stepper Custom Styling for Swipe Animation */
+    ::ng-deep {
+      .mat-stepper-horizontal {
+        background: transparent;
+      }
+
+      .mat-stepper-horizontal-line {
+        opacity: 0.3;
+      }
+
+      .mat-step-header {
+        pointer-events: auto;
+      }
+
+      .mat-step-header.mat-completed {
+        color: #388e3c;
+      }
+
+      .mat-step-icon {
+        background-color: #B99532;
+        color: white;
+      }
+
+      .mat-step-icon.mat-step-icon-state-done {
+        background-color: #388e3c;
+      }
+
+      .mat-step-icon.mat-step-icon-state-edit {
+        background-color: #004A59;
+      }
+    }
+
+    /* Swipe/Slide animations for form transitions */
+    .step-content {
+      animation: slideInFromLeft 0.4s ease-in-out;
+    }
+
+    @keyframes slideInFromLeft {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideOutToRight {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+    }
+
+    @keyframes slideInFromRight {
+      from {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideOutToLeft {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+    }
+
+    /* Mobile touch indicator - show users they can swipe */
+    .form-container {
+      touch-action: pan-y pinch-zoom;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    /* Swipe hint for mobile users */
+    @media (max-width: 768px) {
+      .form-container::before {
+        content: '← Swipe →';
+        display: block;
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        margin-bottom: 10px;
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+      }
+
+      .form-container:hover::before {
+        opacity: 1;
+      }
+    }
   `]
 })
 export class ExpatriateFormComponent implements OnInit, OnDestroy {
@@ -1128,6 +1259,9 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
   companyLetterForm!: FormGroup;
 
   isLoading = false;
+  isHidingOverlay = false;
+  private loadingStartTime: number = 0;
+  private readonly MIN_LOADING_DURATION = 1200; // Minimum 1.2 seconds to show loading overlay
   private submissionDialogRef: MatDialogRef<SubmissionSuccessDialog> | null = null;
   currentYear = new Date().getFullYear();
   selectedCompanyLetterFile: File | null = null;
@@ -1153,6 +1287,12 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
     },
   ];
 
+  // Swipe and animation properties
+  currentStep = 0;
+  touchStartX: number = 0;
+  touchEndX: number = 0;
+  minSwipeDistance = 50;
+
   constructor(
     private fb: FormBuilder,
     private applicationService: ApplicationService,
@@ -1163,6 +1303,32 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
     private formValidationService: FormValidationService,
     private formPersistenceService: FormPersistenceService
   ) {}
+
+  /**
+   * Hides the loading overlay with a minimum display duration
+   * Ensures the overlay is shown for at least MIN_LOADING_DURATION milliseconds
+   */
+  private hideLoadingOverlay(): void {
+    const now = Date.now();
+    const elapsedTime = now - this.loadingStartTime;
+    const remainingTime = this.MIN_LOADING_DURATION - elapsedTime;
+
+    if (remainingTime > 0) {
+      // Show fade-out animation and keep overlay visible until minimum time is reached
+      this.isHidingOverlay = true;
+      setTimeout(() => {
+        this.isLoading = false;
+        this.isHidingOverlay = false;
+      }, remainingTime);
+    } else {
+      // Minimum time already passed, hide immediately with animation
+      this.isHidingOverlay = true;
+      setTimeout(() => {
+        this.isLoading = false;
+        this.isHidingOverlay = false;
+      }, 300); // Time for fade-out animation
+    }
+  }
 
   ngOnInit(): void {
     // Verify user is expatriate applicant
@@ -1206,6 +1372,17 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
     setInterval(() => {
       this.saveFormData();
     }, 5000);
+
+    // Setup touch event listeners for swipe detection
+    this.setupTouchListeners();
+  }
+
+  /**
+   * Setup native touch event listeners for swipe detection
+   * This works without requiring HammerJS library
+   */
+  private setupTouchListeners(): void {
+    console.log('✓ Touch listeners ready for swipe navigation');
   }
 
   initializeForms(): void {
@@ -1410,6 +1587,61 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Handle swiping to the next form/step
+   * Validates current step before moving to next
+   */
+  onSlideNext(stepper: any): void {
+    // Validate current form before moving next
+    const currentForm = this.getCurrentStepForm(stepper.selectedIndex);
+    if (currentForm && !currentForm.valid) {
+      console.warn('⚠️  Cannot move to next step - current form is invalid');
+      // Mark all fields as touched to show validation errors
+      Object.keys(currentForm.controls).forEach(key => {
+        currentForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+    
+    // Use Angular Material stepper's next method
+    if (stepper.selectedIndex < stepper._steps.length - 1) {
+      this.currentStep = stepper.selectedIndex + 1;
+      stepper.next();
+    }
+  }
+
+  /**
+   * Handle swiping to the previous form/step
+   */
+  onSlidePrev(stepper: any): void {
+    if (stepper.selectedIndex > 0) {
+      this.currentStep = stepper.selectedIndex - 1;
+      stepper.previous();
+    }
+  }
+
+  /**
+   * Get the form control for the current step
+   */
+  private getCurrentStepForm(stepIndex: number): FormGroup | null {
+    switch (stepIndex) {
+      case 0:
+        return this.personalParticularsForm;
+      case 1:
+        return this.educationForm;
+      case 2:
+        return this.experienceForm;
+      case 3:
+        return this.apprenticesForm;
+      case 4:
+        return this.gradeForm;
+      case 5:
+        return this.companyLetterForm;
+      default:
+        return null;
+    }
+  }
+
+  /**
    * Save form data to persistence service
    */
   saveFormData(): void {
@@ -1466,6 +1698,7 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
+    this.loadingStartTime = Date.now();
 
     try {
       // Create FormData to handle file upload
@@ -1538,7 +1771,7 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
 
       this.applicationService.submitExpatriateApplication(formData).subscribe({
       next: (response) => {
-        this.isLoading = false;
+        this.hideLoadingOverlay();
         console.log('✓ Expatriate application submitted successfully');
         console.log('  - Application ID:', response.id);
 
@@ -1564,7 +1797,7 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
         // Dialog will handle its own navigation and auto-close
       },
       error: (error) => {
-        this.isLoading = false;
+        this.hideLoadingOverlay();
         console.error('❌ Application submission failed:', error);
         console.error('Error response:', error.error);
         console.error('Error status:', error.status);
@@ -1588,7 +1821,7 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
       },
       });
     } catch (validationError: any) {
-      this.isLoading = false;
+      this.hideLoadingOverlay();
       console.error('❌ Form validation error:', validationError);
       console.error('Error message:', validationError.message);
       

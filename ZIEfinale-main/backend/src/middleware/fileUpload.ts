@@ -32,6 +32,15 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
     'image/gif'
   ];
   
+  // Verify file extension matches MIME type to prevent attacks
+  const ext = path.extname(file.originalname).toLowerCase();
+  const validExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'];
+  
+  if (!validExtensions.includes(ext)) {
+    cb(new Error(`Invalid file extension: ${ext}`), false);
+    return;
+  }
+  
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {

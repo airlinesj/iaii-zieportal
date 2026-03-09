@@ -38,6 +38,51 @@
         </div>
       </div>
 
+      <!-- Annual Membership Fee Section (if applicable) -->
+      <div class="annual-fee-card" *ngIf="annualFeeData?.hasMembership && annualFeeData?.feeStatus">
+        <h2>Annual Membership Renewal Fee</h2>
+        
+        <div class="fee-status" [class.overdue]="annualFeeData!.feeStatus!.daysOverdue > 0" [class.due-soon]="annualFeeData!.feeStatus!.isRenewalDue && annualFeeData!.feeStatus!.daysOverdue === 0">
+          <div class="status-indicator">
+            <span class="status-badge" *ngIf="annualFeeData!.feeStatus!.daysOverdue > 0">
+              ⚠️ OVERDUE
+            </span>
+            <span class="status-badge" *ngIf="annualFeeData!.feeStatus!.isRenewalDue && annualFeeData!.feeStatus!.daysOverdue === 0">
+              📅 DUE SOON
+            </span>
+          </div>
+
+          <div class="fee-info">
+            <div class="info-row">
+              <span class="label">Membership Grade:</span>
+              <span class="value">{{ annualFeeData!.feeStatus!.gradeName }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">Annual Renewal Fee:</span>
+              <span class="value amount">
+                {{ annualFeeData!.feeStatus!.amountUSD }} USD / {{ annualFeeData!.feeStatus!.amountZWG }} ZWG
+              </span>
+              <span class="exchange-rate">(1 USD = {{ annualFeeData!.feeStatus!.exchangeRate | number: '1.0-0' }} ZWG)</span>
+            </div>
+
+            <div class="info-row" *ngIf="annualFeeData!.feeStatus!.daysOverdue === 0">
+              <span class="label">Next Payment Due:</span>
+              <span class="value">{{ annualFeeData!.feeStatus!.nextDueDate | date: 'MMM d, yyyy' }} (in {{ annualFeeData!.feeStatus!.daysUntilDue }} days)</span>
+            </div>
+
+            <div class="info-row" *ngIf="annualFeeData!.feeStatus!.daysOverdue > 0">
+              <span class="label">Overdue Since:</span>
+              <span class="value overdue-text">{{ annualFeeData!.feeStatus!.nextDueDate | date: 'MMM d, yyyy' }} ({{ annualFeeData!.feeStatus!.daysOverdue }} days ago)</span>
+            </div>
+
+            <div class="message-box" [class.warning]="annualFeeData!.feeStatus!.daysOverdue > 0">
+              <p>{{ annualFeeData!.feeStatus!.message }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Payment Gateway Card -->
       <div class="payment-gateway">
         <h2>Payment Method</h2>

@@ -35,6 +35,7 @@ export class RoleGuard implements CanActivate {
     }
 
     const requiredRoles = route.data['roles'] as string[];
+    const requiredAccountType = route.data['accountType'] as string;
 
     // If specific roles are required, check them
     if (requiredRoles && requiredRoles.length > 0) {
@@ -59,6 +60,32 @@ export class RoleGuard implements CanActivate {
           this.router.navigate(['/login'], { replaceUrl: true });
         }
         return false;
+      }
+    }
+
+    // Check if specific account type is required for this route (e.g., audit-trail requires 'audit')
+    if (requiredAccountType) {
+      const isAuditPage = state.url.includes('/audit-trail') || state.url.includes('/audit-management');
+      
+      if (isAuditPage) {
+        // Only 'audit' account type can access audit pages (not even SuperAdmin)
+        const canAccessAuditPage = currentUser.role === 'Admin' && currentUser.accountType === 'audit';
+        
+        if (!canAccessAuditPage) {
+          console.warn('⚠ RoleGuard: User account type not authorized for audit pages');
+          console.warn('  - Required account type:', requiredAccountType);
+          console.warn('  - User account type:', currentUser.accountType);
+          
+          // Redirect based on user type
+          if (currentUser.role === 'SuperAdmin') {
+            this.router.navigate(['/super-admin-dashboard'], { replaceUrl: true });
+          } else if (currentUser.role === 'Admin') {
+            this.router.navigate(['/admin-dashboard'], { replaceUrl: true });
+          } else {
+            this.router.navigate(['/dashboard'], { replaceUrl: true });
+          }
+          return false;
+        }
       }
     }
 

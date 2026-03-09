@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApplicationService } from '../services/application.service';
+import { MembershipService, IAnnualFeeResponse } from '../services/membership.service';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './payment.component.html',
   styleUrls: ['./payment.component.scss']
 })
@@ -22,6 +24,11 @@ export class PaymentComponent implements OnInit {
   mobileTransactionId = '';
   applicationId: string = '';
   paymentCompleted = false;
+
+  // Annual membership fee properties
+  annualFeeData: IAnnualFeeResponse | null = null;
+  annualFeeLoading = false;
+  annualFeeError = '';
 
   // Payment proof upload properties
   selectedPaymentFile: File | null = null;
@@ -39,11 +46,13 @@ export class PaymentComponent implements OnInit {
 
   constructor(
     private applicationService: ApplicationService,
+    private membershipService: MembershipService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadApplicationData();
+    this.loadAnnualFeeStatus();
   }
 
   loadApplicationData(): void {
@@ -79,6 +88,26 @@ export class PaymentComponent implements OnInit {
         this.errorMessage = 'Failed to load application data. Please try again.';
         console.error('Error loading application:', error);
       },
+    });
+  }
+
+  loadAnnualFeeStatus(): void {
+    this.annualFeeLoading = true;
+    this.annualFeeError = '';
+    
+    this.membershipService.getAnnualFeeStatus().subscribe({
+      next: (response) => {
+        this.annualFeeLoading = false;
+        this.annualFeeData = response;
+      },
+      error: (error) => {
+        this.annualFeeLoading = false;
+        // Don't show error if user is not a member (this is normal)
+        if (error.status !== 404) {
+          this.annualFeeError = 'Could not load annual fee information.';
+          console.error('Error loading annual fee status:', error);
+        }
+      }
     });
   }
 

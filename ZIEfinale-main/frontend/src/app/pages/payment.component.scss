@@ -151,6 +151,132 @@
   flex: 1;
 }
 
+.annual-fee-card {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fff9f0 100%);
+  border: 2.5px solid #B99532;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 20px;
+
+  h2 {
+    color: #004A59;
+    font-size: 20px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+
+  .fee-status {
+    background-color: white;
+    border-radius: 6px;
+    padding: 20px;
+    border-left: 5px solid #B99532;
+
+    &.overdue {
+      border-left-color: #d32f2f;
+      background-color: #ffebee;
+    }
+
+    &.due-soon {
+      border-left-color: #ff9800;
+      background-color: #fff3cd;
+    }
+  }
+
+  .status-indicator {
+    margin-bottom: 15px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #B99532;
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+
+    .overdue & {
+      background-color: #d32f2f;
+    }
+
+    .due-soon & {
+      background-color: #ff9800;
+    }
+  }
+
+  .fee-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-weight: 600;
+      color: #004A59;
+    }
+
+    .value {
+      color: #333;
+      font-weight: 500;
+
+      &.amount {
+        font-size: 18px;
+        font-weight: 700;
+        color: #B99532;
+      }
+
+      &.overdue-text {
+        color: #d32f2f;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .message-box {
+    background-color: #e8f4f8;
+    border-left: 4px solid #B99532;
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+    font-size: 13px;
+    color: #333;
+
+    p {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    &.warning {
+      background-color: #ffebee;
+      border-left-color: #d32f2f;
+      color: #c62828;
+    }
+  }
+
+  .exchange-rate {
+    display: block;
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+    font-weight: normal;
+  }
+}
+
 .payment-form,
 .payment-info {
   border-top: 2px solid #ddd;

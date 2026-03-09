@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApplicationService } from '../services/application.service';
 import { AuthService } from '../services/auth.service';
+import { MembershipService } from '../services/membership.service';
 import { ApplicationStatsComponent, MembershipGradeStats } from '../components/application-stats.component';
 import { RefereeResponsesComponent } from '../components/referee-responses.component';
 
@@ -85,6 +86,59 @@ import { RefereeResponsesComponent } from '../components/referee-responses.compo
 
         <!-- Referee Responses Section -->
         <app-referee-responses></app-referee-responses>
+
+        <!-- Exchange Rate Management Section -->
+        <div class="exchange-rate-section">
+          <div class="exchange-rate-card">
+            <div class="card-header">
+              <h2>Exchange Rate Management (USD ↔ ZWG)</h2>
+            </div>
+            <div class="card-content">
+              <div class="rate-display">
+                <div class="current-rate">
+                  <span class="label">Current Rate:</span>
+                  <span class="rate-value">1 USD = {{ exchangeRate | number: '1.2-2' }} ZWG</span>
+                  <span class="rate-source" [class.manual]="isManualRate">{{ isManualRate ? '(Manually Set)' : '(Auto-fetched)' }}</span>
+                </div>
+              </div>
+
+              <div class="rate-form">
+                <div class="form-group">
+                  <label for="newRate">Set New Exchange Rate:</label>
+                  <input
+                    type="number"
+                    id="newRate"
+                    [(ngModel)]="newExchangeRate"
+                    placeholder="e.g., 26.5"
+                    step="0.01"
+                    min="0"
+                    max="1000"
+                    [disabled]="isLoadingRate"
+                  />
+                </div>
+
+                <button
+                  class="btn-update-rate"
+                  (click)="updateExchangeRate()"
+                  [disabled]="isLoadingRate || !newExchangeRate || newExchangeRate <= 0"
+                >
+                  {{ isLoadingRate ? 'Updating...' : 'Update Rate' }}
+                </button>
+
+                <div *ngIf="rateUpdateMessage" class="message" [class.success]="rateUpdateSuccess">
+                  {{ rateUpdateMessage }}
+                </div>
+              </div>
+
+              <div class="rate-info">
+                <p>
+                  <strong>Note:</strong> The current exchange rate is {{ isManualRate ? 'manually set' : 'auto-fetched from live sources' }} 
+                  and will be used for all fee calculations in ZWG.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -484,21 +538,236 @@ import { RefereeResponsesComponent } from '../components/referee-responses.compo
         white-space: nowrap;
       }
     }
+
+    /* Exchange Rate Management Styles */
+    .exchange-rate-section {
+      margin-top: 40px;
+    }
+
+    .exchange-rate-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .exchange-rate-card .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .exchange-rate-card .card-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .exchange-rate-card .card-content {
+      padding: 25px;
+    }
+
+    .rate-display {
+      margin-bottom: 25px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 4px;
+    }
+
+    .current-rate {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .current-rate .label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .current-rate .rate-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .current-rate .rate-source {
+      font-size: 12px;
+      color: #999;
+      padding: 4px 8px;
+      background-color: #e9ecef;
+      border-radius: 3px;
+    }
+
+    .current-rate .rate-source.manual {
+      background-color: #fff3cd;
+      color: #856404;
+      font-weight: 600;
+    }
+
+    .rate-form {
+      margin-bottom: 25px;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .rate-form .form-group {
+      margin-bottom: 15px;
+    }
+
+    .rate-form label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .rate-form input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+
+    .rate-form input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .rate-form input:disabled {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+    }
+
+    .btn-update-rate {
+      width: 100%;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-update-rate:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-update-rate:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .rate-form .message {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .rate-form .message.success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .rate-form .message:not(.success) {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .rate-info {
+      padding: 15px;
+      background-color: #e7f3ff;
+      border-left: 4px solid #0066cc;
+      border-radius: 4px;
+    }
+
+    .rate-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #0066cc;
+      line-height: 1.5;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .exchange-rate-card .card-header h2 {
+        font-size: 16px;
+      }
+
+      .exchange-rate-card .card-content {
+        padding: 15px;
+      }
+
+      .current-rate {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .current-rate .rate-value {
+        font-size: 20px;
+      }
+
+      .rate-form {
+        padding: 15px;
+      }
+
+      .rate-info p {
+        font-size: 12px;
+      }
+    }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   applications: any[] = [];
   canAccessAuditTrail = false;
 
+  // Exchange rate management properties
+  exchangeRate: number = 26.5;
+  newExchangeRate: number | null = null;
+  isLoadingRate: boolean = false;
+  isManualRate: boolean = false;
+  rateUpdateMessage: string = '';
+  rateUpdateSuccess: boolean = false;
+
   constructor(
     private applicationService: ApplicationService,
     private authService: AuthService,
+    private membershipService: MembershipService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadApplications();
     this.checkAuditTrailAccess();
+    this.loadExchangeRate();
   }
 
   checkAuditTrailAccess(): void {
@@ -583,5 +852,65 @@ export class AdminDashboardComponent implements OnInit {
   logout(): void {
     // Use logoutAndNavigate to properly clear browser history and navigate to landing page
     this.authService.logoutAndNavigate();
+  }
+
+  /**
+   * Load the current exchange rate from the API
+   */
+  loadExchangeRate(): void {
+    this.isLoadingRate = true;
+    this.membershipService.getExchangeRateInfo().subscribe({
+      next: (response: any) => {
+        this.exchangeRate = response.exchangeRate;
+        this.isManualRate = response.isManual || false;
+        this.newExchangeRate = response.exchangeRate;
+        this.isLoadingRate = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading exchange rate:', error);
+        this.rateUpdateMessage = 'Failed to load exchange rate. Using default.';
+        this.rateUpdateSuccess = false;
+        this.isLoadingRate = false;
+      },
+    });
+  }
+
+  /**
+   * Update the exchange rate manually
+   */
+  updateExchangeRate(): void {
+    if (!this.newExchangeRate || this.newExchangeRate <= 0) {
+      this.rateUpdateMessage = 'Please enter a valid exchange rate greater than 0.';
+      this.rateUpdateSuccess = false;
+      return;
+    }
+
+    this.isLoadingRate = true;
+    this.membershipService.setExchangeRate(this.newExchangeRate).subscribe({
+      next: (response: any) => {
+        this.exchangeRate = response.exchangeRate;
+        this.isManualRate = response.isManual;
+        this.rateUpdateMessage = `✓ Exchange rate updated successfully to ${response.exchangeRate} ZWG per USD`;
+        this.rateUpdateSuccess = true;
+        this.isLoadingRate = false;
+
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          this.rateUpdateMessage = '';
+        }, 5000);
+      },
+      error: (error: any) => {
+        console.error('Error updating exchange rate:', error);
+        const errorMsg = error.error?.message || 'Failed to update exchange rate. Please try again.';
+        this.rateUpdateMessage = `✗ ${errorMsg}`;
+        this.rateUpdateSuccess = false;
+        this.isLoadingRate = false;
+
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          this.rateUpdateMessage = '';
+        }, 5000);
+      },
+    });
   }
 }
