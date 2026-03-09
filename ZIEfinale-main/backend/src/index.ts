@@ -12,6 +12,7 @@ import applicationRoutes from './routes/applicationRoutes';
 import refereeRoutes from './routes/sponsorRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import membershipRoutes from './routes/membershipRoutes';
+import settingsRoutes from './routes/settingsRoutes';
 import { initializeDefaultGrades } from './models/MembershipGrade';
 import { AuditRetentionService } from './services/AuditRetentionService';
 import { validateRedirectUrl, addRedirectHelper } from './middleware/redirectValidation';
@@ -154,6 +155,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/referees', refereeRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/membership', membershipRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

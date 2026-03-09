@@ -435,3 +435,346 @@ export async function sendStatusUpdateEmail(
 
   return sendEmail(email, `Application Status Update: ${status}`, htmlContent);
 }
+
+/**
+ * Send exchange rate approval request notification to superadmin
+ */
+export async function sendExchangeRateApprovalEmail(data: {
+  superAdminName: string;
+  superAdminEmail: string;
+  adminName: string;
+  adminEmail: string;
+  currentRate: number;
+  requestedRate: number;
+  reason: string;
+  approvalId: string;
+}): Promise<EmailResult> {
+  try {
+    const transporter = getEmailTransporter();
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    const percentChange = (((data.requestedRate - data.currentRate) / data.currentRate) * 100).toFixed(2);
+
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #c0392b;">⚠️ Exchange Rate Update Request Pending Approval</h2>
+            
+            <p>Dear <strong>${data.superAdminName}</strong>,</p>
+            
+            <p>An admin has submitted a request to update the USD to ZWL exchange rate. Your approval is required.</p>
+            
+            <div style="background-color: #ecf0f1; padding: 20px; border-radius: 5px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #2c3e50;">Exchange Rate Details</h3>
+              
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #bdc3c7;">
+                  <td style="padding: 10px; font-weight: bold;">Current Rate:</td>
+                  <td style="padding: 10px;">1 USD = ZWL ${data.currentRate.toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #bdc3c7;">
+                  <td style="padding: 10px; font-weight: bold;">Requested Rate:</td>
+                  <td style="padding: 10px;">1 USD = ZWL ${data.requestedRate.toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #bdc3c7;">
+                  <td style="padding: 10px; font-weight: bold;">Change:</td>
+                  <td style="padding: 10px; color: ${data.requestedRate > data.currentRate ? '#e74c3c' : '#27ae60'};">
+                    ${data.requestedRate > data.currentRate ? '+' : ''}${(data.requestedRate - data.currentRate).toFixed(2)} (${percentChange}%)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; font-weight: bold;">Requested By:</td>
+                  <td style="padding: 10px;">${data.adminName} (${data.adminEmail})</td>
+                </tr>
+              </table>
+              
+              <h4 style="margin: 20px 0 10px 0; color: #2c3e50;">Reason for Update:</h4>
+              <p style="margin: 0; padding: 10px; background-color: white; border-left: 3px solid #3498db;">
+                ${data.reason}
+              </p>
+            </div>
+            
+            <p style="color: #c0392b; font-weight: bold;">Please review and take action:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${frontendUrl}/admin/exchange-rate-approvals/${data.approvalId}" style="background-color: #27ae60; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">
+                Review & Approve/Reject
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <p style="font-size: 12px; color: #666;">
+              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const textContent = `
+Exchange Rate Update Request - Pending Approval
+
+Dear ${data.superAdminName},
+
+An admin has submitted a request to update the USD to ZWL exchange rate. Your approval is required.
+
+Current Rate: 1 USD = ZWL ${data.currentRate.toFixed(2)}
+Requested Rate: 1 USD = ZWL ${data.requestedRate.toFixed(2)}
+Change: ${data.requestedRate > data.currentRate ? '+' : ''}${(data.requestedRate - data.currentRate).toFixed(2)} (${percentChange}%)
+
+Requested By: ${data.adminName} (${data.adminEmail})
+
+Reason for Update:
+${data.reason}
+
+Please review and take action at:
+${frontendUrl}/admin/exchange-rate-approvals/${data.approvalId}
+
+This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: data.superAdminEmail,
+      subject: `⚠️ Exchange Rate Update Approval Required`,
+      text: textContent,
+      html: htmlContent,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✉️ Exchange rate approval request email sent:', {
+      messageId: info.messageId,
+      to: data.superAdminEmail,
+      approvalId: data.approvalId,
+    });
+
+    return {
+      success: true,
+      messageId: info.messageId,
+    };
+  } catch (error: any) {
+    console.error('❌ Error sending exchange rate approval email:', error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Send exchange rate approved notification to admin
+ */
+export async function sendExchangeRateApprovedEmail(data: {
+  adminName: string;
+  adminEmail: string;
+  oldRate: number;
+  newRate: number;
+  approvalComment: string;
+}): Promise<EmailResult> {
+  try {
+    const transporter = getEmailTransporter();
+
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #27ae60;">✓ Exchange Rate Update Approved</h2>
+            
+            <p>Dear <strong>${data.adminName}</strong>,</p>
+            
+            <p>Your exchange rate update request has been <strong>approved by a superadmin</strong>.</p>
+            
+            <div style="background-color: #d5f4e6; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #27ae60;">
+              <h3 style="margin-top: 0; color: #27ae60;">Rate Update Applied</h3>
+              
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #a9dfbf;">
+                  <td style="padding: 10px; font-weight: bold;">Previous Rate:</td>
+                  <td style="padding: 10px;">1 USD = ZWL ${data.oldRate.toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #a9dfbf;">
+                  <td style="padding: 10px; font-weight: bold;">New Rate:</td>
+                  <td style="padding: 10px;">1 USD = ZWL ${data.newRate.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; font-weight: bold;">Status:</td>
+                  <td style="padding: 10px; color: #27ae60; font-weight: bold;">Active</td>
+                </tr>
+              </table>
+            </div>
+            
+            <h4 style="margin: 20px 0 10px 0; color: #2c3e50;">Approval Comment:</h4>
+            <p style="margin: 0; padding: 10px; background-color: #ecf0f1; border-left: 3px solid #27ae60;">
+              ${data.approvalComment}
+            </p>
+            
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+              The new exchange rate is now active in the system and will be used for all future fee calculations.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <p style="font-size: 12px; color: #666;">
+              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const textContent = `
+Exchange Rate Update Approved
+
+Dear ${data.adminName},
+
+Your exchange rate update request has been approved by a superadmin.
+
+Previous Rate: 1 USD = ZWL ${data.oldRate.toFixed(2)}
+New Rate: 1 USD = ZWL ${data.newRate.toFixed(2)}
+Status: Active
+
+Approval Comment:
+${data.approvalComment}
+
+The new exchange rate is now active in the system and will be used for all future fee calculations.
+
+This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: data.adminEmail,
+      subject: `✓ Your Exchange Rate Update Has Been Approved`,
+      text: textContent,
+      html: htmlContent,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✉️ Exchange rate approved email sent:', {
+      messageId: info.messageId,
+      to: data.adminEmail,
+    });
+
+    return {
+      success: true,
+      messageId: info.messageId,
+    };
+  } catch (error: any) {
+    console.error('❌ Error sending exchange rate approved email:', error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Send exchange rate rejected notification to admin
+ */
+export async function sendExchangeRateRejectedEmail(data: {
+  adminName: string;
+  adminEmail: string;
+  requestedRate: number;
+  currentRate: number;
+  rejectionReason: string;
+}): Promise<EmailResult> {
+  try {
+    const transporter = getEmailTransporter();
+
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #e74c3c;">✗ Exchange Rate Update Rejected</h2>
+            
+            <p>Dear <strong>${data.adminName}</strong>,</p>
+            
+            <p>Your exchange rate update request has been <strong>rejected by a superadmin</strong>.</p>
+            
+            <div style="background-color: #fadbd8; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #e74c3c;">
+              <h3 style="margin-top: 0; color: #e74c3c;">Request Details</h3>
+              
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #f5b7b1;">
+                  <td style="padding: 10px; font-weight: bold;">Current Rate:</td>
+                  <td style="padding: 10px;">1 USD = ZWL ${data.currentRate.toFixed(2)} (Still Active)</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f5b7b1;">
+                  <td style="padding: 10px; font-weight: bold;">Requested Rate:</td>
+                  <td style="padding: 10px;">1 USD = ZWL ${data.requestedRate.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; font-weight: bold;">Status:</td>
+                  <td style="padding: 10px; color: #e74c3c; font-weight: bold;">Rejected</td>
+                </tr>
+              </table>
+            </div>
+            
+            <h4 style="margin: 20px 0 10px 0; color: #2c3e50;">Rejection Reason:</h4>
+            <p style="margin: 0; padding: 10px; background-color: #ecf0f1; border-left: 3px solid #e74c3c;">
+              ${data.rejectionReason}
+            </p>
+            
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+              If you believe this request should be reconsidered, please contact a superadmin or submit a new request with additional information.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <p style="font-size: 12px; color: #666;">
+              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const textContent = `
+Exchange Rate Update Rejected
+
+Dear ${data.adminName},
+
+Your exchange rate update request has been rejected by a superadmin.
+
+Current Rate: 1 USD = ZWL ${data.currentRate.toFixed(2)} (Still Active)
+Requested Rate: 1 USD = ZWL ${data.requestedRate.toFixed(2)}
+Status: Rejected
+
+Rejection Reason:
+${data.rejectionReason}
+
+If you believe this request should be reconsidered, please contact a superadmin or submit a new request with additional information.
+
+This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: data.adminEmail,
+      subject: `✗ Your Exchange Rate Update Has Been Rejected`,
+      text: textContent,
+      html: htmlContent,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✉️ Exchange rate rejected email sent:', {
+      messageId: info.messageId,
+      to: data.adminEmail,
+    });
+
+    return {
+      success: true,
+      messageId: info.messageId,
+    };
+  } catch (error: any) {
+    console.error('❌ Error sending exchange rate rejected email:', error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}

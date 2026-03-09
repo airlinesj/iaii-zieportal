@@ -18,7 +18,7 @@ import { AuthService } from '../services/auth.service';
 
       <div class="login-card card">
         <div class="tab-content">
-          <h2>Applicant Login</h2>
+          <h2>Log-in</h2>
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
             <div class="form-group">
