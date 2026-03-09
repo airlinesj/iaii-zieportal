@@ -32,7 +32,7 @@ interface ExchangeRateRequest {
         </div>
       </div>
 
-      <form (ngSubmit)="submitRequest()" [ngClass]="submitting && 'submitting'">
+      <form (ngSubmit)="submitRequest()" [ngClass]="{'submitting': submitting}">
         <div class="form-group">
           <label for="newRate">
             <span class="label-text">New Exchange Rate (USD to ZWL)</span>

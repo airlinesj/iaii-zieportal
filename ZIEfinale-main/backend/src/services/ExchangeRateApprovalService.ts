@@ -117,14 +117,14 @@ export class ExchangeRateApprovalService {
           'EXCHANGE_RATE_UPDATE',
           'ExchangeRate',
           approval._id,
-          `Exchange rate updated from ZWL ${oldRate.toFixed(2)} to ZWL ${approval.requestedRate.toFixed(2)} - Approved by ${superadmin?.firstName} ${superadmin?.lastName}`,
+          `Exchange rate updated from ZWL ${oldRate.toFixed(2)} to ZWL ${approval.requestedRate.toFixed(2)} - Approved by ${superadmin?.email}`,
           {
             changes: {
               before: { exchangeRate: oldRate },
               after: { exchangeRate: approval.requestedRate },
             },
             status: 'SUCCESS',
-            adminName: superadmin ? `${superadmin.firstName} ${superadmin.lastName}` : 'SuperAdmin',
+            adminName: superadmin ? superadmin.email : 'SuperAdmin',
           }
         );
       }
@@ -135,7 +135,7 @@ export class ExchangeRateApprovalService {
       const admin = await User.findById(approval.requestedBy);
       if (admin) {
         await sendExchangeRateApprovedEmail({
-          adminName: admin.firstName + ' ' + admin.lastName,
+          adminName: admin.email,
           adminEmail: admin.email,
           oldRate: approval.currentRate,
           newRate: approval.requestedRate,
@@ -190,14 +190,14 @@ export class ExchangeRateApprovalService {
         'EXCHANGE_RATE_UPDATE',
         'ExchangeRate',
         approval._id,
-        `Exchange rate update request REJECTED by ${superadmin?.firstName} ${superadmin?.lastName} - Proposed rate: ZWL ${approval.requestedRate.toFixed(2)}`,
+        `Exchange rate update request REJECTED by ${superadmin?.email} - Proposed rate: ZWL ${approval.requestedRate.toFixed(2)}`,
         {
           changes: {
             before: { status: 'pending' },
             after: { status: 'rejected' },
           },
           status: 'SUCCESS',
-          adminName: superadmin ? `${superadmin.firstName} ${superadmin.lastName}` : 'SuperAdmin',
+          adminName: superadmin ? superadmin.email : 'SuperAdmin',
         }
       );
 
@@ -205,7 +205,7 @@ export class ExchangeRateApprovalService {
       const admin = await User.findById(approval.requestedBy);
       if (admin) {
         await sendExchangeRateRejectedEmail({
-          adminName: admin.firstName + ' ' + admin.lastName,
+          adminName: admin.email,
           adminEmail: admin.email,
           requestedRate: approval.requestedRate,
           currentRate: approval.currentRate,
@@ -303,9 +303,9 @@ export class ExchangeRateApprovalService {
       for (const superAdmin of superAdmins) {
         try {
           await sendExchangeRateApprovalEmail({
-            superAdminName: superAdmin.firstName + ' ' + superAdmin.lastName,
+            superAdminName: superAdmin.email,
             superAdminEmail: superAdmin.email,
-            adminName: admin.firstName + ' ' + admin.lastName,
+            adminName: admin.email,
             adminEmail: admin.email,
             currentRate: approval.currentRate,
             requestedRate: approval.requestedRate,

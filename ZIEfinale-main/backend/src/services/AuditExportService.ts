@@ -345,7 +345,7 @@ export class AuditExportService {
         try {
           await this.sendAuditExportEmail(
             auditor.email,
-            auditor.firstName + ' ' + auditor.lastName,
+            auditor.email,
             pdfResult.filePath,
             csvResult.filePath,
             logsToExport.length

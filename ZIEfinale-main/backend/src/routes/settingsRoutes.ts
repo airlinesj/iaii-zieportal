@@ -44,6 +44,12 @@ router.get('/exchange-rate', authMiddleware, async (req: AuthRequest, res: Respo
 router.post('/exchange-rate/request', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
     const { newRate, reason } = req.body;
 
     // Check if user is an admin
@@ -97,6 +103,12 @@ router.post('/exchange-rate/request', authMiddleware, async (req: AuthRequest, r
 router.get('/exchange-rate/pending', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
 
     // Check if user is a superadmin
     const user = await User.findById(userId);
@@ -134,6 +146,12 @@ router.get('/exchange-rate/pending', authMiddleware, async (req: AuthRequest, re
 router.get('/exchange-rate/history', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
     const { status, limit, skip } = req.query;
 
     // Check if user is a superadmin or audit admin
@@ -178,6 +196,12 @@ router.get('/exchange-rate/history', authMiddleware, async (req: AuthRequest, re
 router.post('/exchange-rate/:approvalId/approve', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
     const { approvalId } = req.params;
     const { comment } = req.body;
 
@@ -218,6 +242,12 @@ router.post('/exchange-rate/:approvalId/approve', authMiddleware, async (req: Au
 router.post('/exchange-rate/:approvalId/reject', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
     const { approvalId } = req.params;
     const { comment } = req.body;
 
