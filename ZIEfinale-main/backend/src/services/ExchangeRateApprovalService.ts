@@ -7,6 +7,7 @@ import ExchangeRateApproval, { IExchangeRateApproval } from '../models/ExchangeR
 import SystemSettings from '../models/SystemSettings';
 import { User } from '../models/User';
 import { sendExchangeRateApprovalEmail, sendExchangeRateApprovedEmail, sendExchangeRateRejectedEmail } from './emailService';
+import { AuditService } from './AuditService';
 
 export class ExchangeRateApprovalService {
   private static instance: ExchangeRateApprovalService;
@@ -97,6 +98,8 @@ export class ExchangeRateApprovalService {
       // Apply the new rate to system settings
       const settings = await SystemSettings.findOne();
       if (settings) {
+        const oldRate = settings.exchangeRateUSDToZWG;
+        
         settings.exchangeRateUSDToZWG = approval.requestedRate;
         settings.exchangeRateLastUpdatedAt = new Date();
         settings.exchangeRateLastUpdatedBy = new (require('mongoose').Types.ObjectId)(superAdminId);
@@ -105,6 +108,25 @@ export class ExchangeRateApprovalService {
 
         // Set applied date
         approval.appliedDate = new Date();
+
+        // Log to audit trail
+        const superadmin = await User.findById(superAdminId);
+        await AuditService.logAction(
+          superAdminId,
+          superadmin?.email || 'unknown@superadmin.com',
+          'EXCHANGE_RATE_UPDATE',
+          'ExchangeRate',
+          approval._id,
+          `Exchange rate updated from ZWL ${oldRate.toFixed(2)} to ZWL ${approval.requestedRate.toFixed(2)} - Approved by ${superadmin?.firstName} ${superadmin?.lastName}`,
+          {
+            changes: {
+              before: { exchangeRate: oldRate },
+              after: { exchangeRate: approval.requestedRate },
+            },
+            status: 'SUCCESS',
+            adminName: superadmin ? `${superadmin.firstName} ${superadmin.lastName}` : 'SuperAdmin',
+          }
+        );
       }
 
       await approval.save();
@@ -159,6 +181,25 @@ export class ExchangeRateApprovalService {
       approval.approvalDate = new Date();
 
       await approval.save();
+
+      // Log to audit trail
+      const superadmin = await User.findById(superAdminId);
+      await AuditService.logAction(
+        superAdminId,
+        superadmin?.email || 'unknown@superadmin.com',
+        'EXCHANGE_RATE_UPDATE',
+        'ExchangeRate',
+        approval._id,
+        `Exchange rate update request REJECTED by ${superadmin?.firstName} ${superadmin?.lastName} - Proposed rate: ZWL ${approval.requestedRate.toFixed(2)}`,
+        {
+          changes: {
+            before: { status: 'pending' },
+            after: { status: 'rejected' },
+          },
+          status: 'SUCCESS',
+          adminName: superadmin ? `${superadmin.firstName} ${superadmin.lastName}` : 'SuperAdmin',
+        }
+      );
 
       // Send rejection notification
       const admin = await User.findById(approval.requestedBy);

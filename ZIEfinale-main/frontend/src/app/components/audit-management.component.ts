@@ -45,6 +45,13 @@ interface AuditAdmin {
         >
           Create Audit Account
         </button>
+        <button
+          [class.active]="activeTab === 'export'"
+          (click)="activeTab = 'export'"
+          class="tab-button"
+        >
+          Export Audit Logs
+        </button>
       </div>
 
       <!-- Manage Admins Tab -->
@@ -195,6 +202,83 @@ interface AuditAdmin {
 
           <div *ngIf="createMessage" [class]="'message ' + (createSuccess ? 'success' : 'error')">
             {{ createMessage }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Audit Logs Tab -->
+      <div *ngIf="activeTab === 'export'" class="tab-content">
+        <div class="export-section">
+          <h3>Export Audit Trail Data</h3>
+          <p class="info">Download audit logs in PDF or CSV format. Data is retained for 390 days non-negotiable.</p>
+
+          <div *ngIf="exportInfo" class="export-info-card">
+            <div class="info-item">
+              <label>Total Audit Records:</label>
+              <span>{{ exportInfo.totalLogs | number }}</span>
+            </div>
+            <div class="info-item">
+              <label>Date Range:</label>
+              <span>
+                {{ (exportInfo.oldestLog | date: 'short') || 'N/A' }} to 
+                {{ (exportInfo.newestLog | date: 'short') || 'N/A' }}
+              </span>
+            </div>
+            <div class="info-item">
+              <label>Retention Policy:</label>
+              <span class="badge retention">{{ exportInfo.retentionDays }} Days (Non-Negotiable)</span>
+            </div>
+          </div>
+
+          <div class="export-options">
+            <div class="option-card">
+              <h4>
+                <span class="material-symbols-outlined">file_pdf</span>
+                PDF Format
+              </h4>
+              <p>Comprehensive report with analysis, summary statistics, and detailed tables</p>
+              <button 
+                (click)="exportAuditLog('pdf')"
+                class="btn-export pdf"
+                [disabled]="isExporting"
+              >
+                <span class="material-symbols-outlined">download</span>
+                {{ isExporting ? 'Generating PDF...' : 'Download PDF' }}
+              </button>
+            </div>
+
+            <div class="option-card">
+              <h4>
+                <span class="material-symbols-outlined">table_chart</span>
+                CSV Format
+              </h4>
+              <p>Spreadsheet-compatible data for analysis in Excel or Google Sheets</p>
+              <button 
+                (click)="exportAuditLog('csv')"
+                class="btn-export csv"
+                [disabled]="isExporting"
+              >
+                <span class="material-symbols-outlined">download</span>
+                {{ isExporting ? 'Generating CSV...' : 'Download CSV' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="exportMessage" [class]="'export-message ' + (exportSuccess ? 'success' : 'error')">
+            <span class="material-symbols-outlined">{{ exportSuccess ? 'check_circle' : 'error' }}</span>
+            {{ exportMessage }}
+          </div>
+
+          <div class="export-note">
+            <span class="material-symbols-outlined">info</span>
+            <div>
+              <strong>Data Retention Policy:</strong>
+              <p>
+                Audit logs are retained for a mandatory 390-day cycle. After 390 days, 
+                logs are automatically cleared from the system. Before deletion, all audit data 
+                is exported and archived, with copies sent to audit administrators and superadmins via email.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -824,10 +908,197 @@ interface AuditAdmin {
     .close-notification:hover {
       opacity: 1;
     }
+
+    /* Export Section Styles */
+    .export-section h3 {
+      color: #004A59;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .export-section .info {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .export-info-card {
+      background: #f3f4f6;
+      border: 2.5px solid #004A59;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+    }
+
+    .info-item label {
+      font-weight: 600;
+      color: #004A59;
+    }
+
+    .info-item span {
+      background: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+
+    .info-item .badge.retention {
+      background: #FFF3CD;
+      color: #856404;
+      border-color: #ffeaa7;
+      font-weight: 700;
+    }
+
+    .export-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .option-card {
+      background: white;
+      border: 2.5px solid #ddd;
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .option-card:hover {
+      border-color: #004A59;
+      box-shadow: 0 4px 12px rgba(0, 74, 89, 0.1);
+    }
+
+    .option-card h4 {
+      margin: 0;
+      color: #004A59;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .option-card .material-symbols-outlined {
+      font-size: 24px;
+    }
+
+    .option-card p {
+      margin: 0;
+      color: #666;
+      font-size: 13px;
+    }
+
+    .btn-export {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      margin-top: auto;
+    }
+
+    .btn-export.pdf {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-export.pdf:hover:not(:disabled) {
+      background: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
+    }
+
+    .btn-export.csv {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-export.csv:hover:not(:disabled) {
+      background: #15803d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(22, 163, 74, 0.2);
+    }
+
+    .btn-export:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .export-message {
+      padding: 12px 16px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .export-message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .export-message.error {
+      background: #fee2e2;
+      color: #7f1d1d;
+      border: 1px solid #fecaca;
+    }
+
+    .export-note {
+      background: #e8f4f8;
+      border-left: 4px solid #3498db;
+      border-radius: 4px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .export-note .material-symbols-outlined {
+      color: #3498db;
+      flex-shrink: 0;
+    }
+
+    .export-note div {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .export-note strong {
+      color: #004A59;
+    }
+
+    .export-note p {
+      margin: 0;
+      color: #555;
+      font-size: 13px;
+      line-height: 1.6;
+    }
   `]
 })
 export class AuditManagementComponent implements OnInit {
-  activeTab: 'admins' | 'retention' | 'create' = 'admins';
+  activeTab: 'admins' | 'retention' | 'create' | 'export' = 'admins';
   auditAdmins: AuditAdmin[] = [];
   loading = false;
   processingAdminId: string | null = null;
@@ -838,6 +1109,12 @@ export class AuditManagementComponent implements OnInit {
   creatingAccount = false;
   createMessage = '';
   createSuccess = false;
+
+  // Export-related properties
+  exportInfo: any = null;
+  isExporting = false;
+  exportMessage = '';
+  exportSuccess = false;
 
   newAuditAccount = {
     email: '',
@@ -860,6 +1137,7 @@ export class AuditManagementComponent implements OnInit {
   ngOnInit(): void {
     this.loadAuditAdmins();
     this.loadRetentionStats();
+    this.loadExportInfo();
   }
 
   loadAuditAdmins(): void {
@@ -1003,5 +1281,66 @@ export class AuditManagementComponent implements OnInit {
           this.creatingAccount = false;
         }
       );
+  }
+
+  loadExportInfo(): void {
+    this.http.get<{ success: boolean; data: any }>(`${this.apiUrl}/export/info`, {
+      headers: this.getHeaders()
+    }).subscribe(
+      (response) => {
+        this.exportInfo = response.data;
+      },
+      (error) => {
+        console.error('Error loading export info:', error);
+      }
+    );
+  }
+
+  exportAuditLog(format: 'pdf' | 'csv'): void {
+    this.isExporting = true;
+    this.exportMessage = '';
+
+    const endpoint = `${this.apiUrl}/export/${format}`;
+
+    this.http.get(endpoint, {
+      headers: this.getHeaders(),
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe(
+      (response: any) => {
+        // Get filename from response headers if available
+        let filename = `audit-report.${format}`;
+        const contentDisposition = response.headers.get('content-disposition');
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="(.+)"/);
+          if (match) {
+            filename = match[1];
+          }
+        }
+
+        // Create blob and download
+        const blob = response.body;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        this.exportSuccess = true;
+        this.exportMessage = `${format.toUpperCase()} export downloaded successfully!`;
+        this.isExporting = false;
+
+        setTimeout(() => {
+          this.exportMessage = '';
+        }, 5000);
+      },
+      (error) => {
+        console.error('Error exporting audit log:', error);
+        this.exportSuccess = false;
+        this.exportMessage = error.error?.message || `Failed to export ${format.toUpperCase()}`;
+        this.isExporting = false;
+      }
+    );
   }
 }

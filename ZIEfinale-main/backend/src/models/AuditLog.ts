@@ -4,8 +4,8 @@ export interface IAuditLog extends Document {
   adminId: mongoose.Types.ObjectId;
   adminEmail: string;
   adminName?: string;
-  action: 'LOGIN' | 'LOGOUT' | 'APPROVE_APPLICATION' | 'REJECT_APPLICATION' | 'ASSIGN_GRADE' | 'UPDATE_APPLICATION' | 'VIEW_APPLICANT' | 'GENERATE_CERTIFICATE' | 'OTHER';
-  resourceType: string; // 'Application', 'User', 'Certificate', etc.
+  action: 'LOGIN' | 'LOGOUT' | 'APPROVE_APPLICATION' | 'REJECT_APPLICATION' | 'ASSIGN_GRADE' | 'UPDATE_APPLICATION' | 'VIEW_APPLICANT' | 'GENERATE_CERTIFICATE' | 'EXCHANGE_RATE_UPDATE' | 'OTHER';
+  resourceType: string; // 'Application', 'User', 'Certificate', 'ExchangeRate', etc.
   resourceId: mongoose.Types.ObjectId | string;
   description: string;
   changes?: {
@@ -47,6 +47,7 @@ const auditLogSchema = new Schema<IAuditLog>(
         'UPDATE_APPLICATION',
         'VIEW_APPLICANT',
         'GENERATE_CERTIFICATE',
+        'EXCHANGE_RATE_UPDATE',
         'OTHER',
       ],
       required: true,

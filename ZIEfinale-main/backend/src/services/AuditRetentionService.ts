@@ -1,5 +1,6 @@
 import { AuditLog } from '../models/AuditLog';
 import cron from 'node-cron';
+import AuditExportService from './AuditExportService';
 
 export interface RetentionPolicy {
   name: string;
@@ -11,13 +12,13 @@ export interface RetentionPolicy {
 export class AuditRetentionService {
   private static policies: RetentionPolicy[] = [
     {
-      name: 'Default Policy (90 days)',
-      retentionDays: 90,
+      name: 'Standard Policy (390 days)',
+      retentionDays: 390,
       cronSchedule: '0 2 * * *', // Run daily at 2 AM
       enabled: true,
     },
     {
-      name: 'Long Term Storage (1 year)',
+      name: 'Extended Storage (1 year)',
       retentionDays: 365,
       cronSchedule: '0 3 * * 0', // Run weekly on Sundays at 3 AM
       enabled: false,
@@ -47,24 +48,44 @@ export class AuditRetentionService {
 
   /**
    * Apply retention policy to clean up old audit logs
+   * Exports data before deletion for compliance
    */
   static async applyRetentionPolicy(retentionDays: number): Promise<void> {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
+      // Check if there are logs to delete
+      const logsToDelete = await AuditLog.countDocuments({
+        createdAt: { $lt: cutoffDate },
+      });
+
+      if (logsToDelete === 0) {
+        console.log(`ℹ️ No audit logs to delete (retention: ${retentionDays} days)`);
+        return;
+      }
+
+      console.log(`🔄 Exporting ${logsToDelete} audit logs before deletion (${retentionDays} day cycle)...`);
+
+      // Export logs before deletion
+      const exportService = AuditExportService.getInstance();
+      await exportService.exportBeforeDeletion(retentionDays);
+
+      // Now delete the old logs
       const result = await AuditLog.deleteMany({
         createdAt: { $lt: cutoffDate },
       });
 
-      console.log(`Retention policy applied: Deleted ${result.deletedCount} audit logs older than ${retentionDays} days`);
+      console.log(`✓ Retention policy applied: Deleted ${result.deletedCount} audit logs older than ${retentionDays} days`);
 
       // Archive the count
-      const archivedCount = result.deletedCount;
       const archiveDate = new Date().toISOString();
-      console.log(`Archive entry: [${archiveDate}] Archived ${archivedCount} records`);
+      console.log(`✓ Archive entry: [${archiveDate}] Archived and deleted ${result.deletedCount} records`);
+
+      // Cleanup old export files (keep exports for 60 days)
+      await exportService.cleanupOldExports(60);
     } catch (error) {
-      console.error('Error applying retention policy:', error);
+      console.error('❌ Error applying retention policy:', error);
       throw error;
     }
   }

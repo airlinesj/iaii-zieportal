@@ -4,6 +4,7 @@ import { AuditService } from '../services/AuditService';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { ReportExportService } from '../services/ReportExportService';
 import { AuditRetentionService } from '../services/AuditRetentionService';
+import AuditExportService from '../services/AuditExportService';
 import { User } from '../models/User';
 
 const router = Router();
@@ -432,6 +433,94 @@ router.post('/admin/unlock/:adminId', authMiddleware, async (req: AuthRequest, r
   } catch (error) {
     console.error('Error unlocking account:', error);
     res.status(500).json({ message: 'Error unlocking account', error });
+  }
+});
+
+/**
+ * AUDIT EXPORT ENDPOINTS
+ * Auditors can export audit trail data as PDF or CSV
+ */
+
+// Export audit logs as PDF
+router.get('/export/pdf', authMiddleware, auditAccessMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const exportService = AuditExportService.getInstance();
+    const { filePath, fileName } = await exportService.generateOnDemandReport(
+      req.userId as string,
+      'pdf',
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined
+    );
+
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error('Error sending PDF file:', err);
+      }
+    });
+  } catch (error: any) {
+    console.error('Error exporting PDF:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate PDF export',
+      error: error.message,
+    });
+  }
+});
+
+// Export audit logs as CSV
+router.get('/export/csv', authMiddleware, auditAccessMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const exportService = AuditExportService.getInstance();
+    const { filePath, fileName } = await exportService.generateOnDemandReport(
+      req.userId as string,
+      'csv',
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined
+    );
+
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error('Error sending CSV file:', err);
+      }
+    });
+  } catch (error: any) {
+    console.error('Error exporting CSV:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate CSV export',
+      error: error.message,
+    });
+  }
+});
+
+// Get export availability info
+router.get('/export/info', authMiddleware, auditAccessMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const stats = await AuditRetentionService.getAuditLogStats();
+
+    res.json({
+      success: true,
+      message: 'Export information retrieved',
+      data: {
+        totalLogs: stats.totalLogs,
+        oldestLog: stats.oldestLog,
+        newestLog: stats.newestLog,
+        retentionDays: 390,
+        formats: ['pdf', 'csv'],
+        info: 'Audit logs are retained for a non-negotiable 390 days. Data is kept in backend storage but not visible in frontend after retention period.',
+      },
+    });
+  } catch (error: any) {
+    console.error('Error getting export info:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve export information',
+      error: error.message,
+    });
   }
 });
 
