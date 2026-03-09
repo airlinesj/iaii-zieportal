@@ -4,7 +4,7 @@ export interface IAuditLog extends Document {
   adminId: mongoose.Types.ObjectId;
   adminEmail: string;
   adminName?: string;
-  action: 'LOGIN' | 'LOGOUT' | 'APPROVE_APPLICATION' | 'REJECT_APPLICATION' | 'ASSIGN_GRADE' | 'UPDATE_APPLICATION' | 'VIEW_APPLICANT' | 'GENERATE_CERTIFICATE' | 'EXCHANGE_RATE_UPDATE' | 'OTHER';
+  action: 'LOGIN' | 'LOGOUT' | 'APPROVE_APPLICATION' | 'REJECT_APPLICATION' | 'ASSIGN_GRADE' | 'UPDATE_APPLICATION' | 'VIEW_APPLICANT' | 'GENERATE_CERTIFICATE' | 'EXCHANGE_RATE_UPDATE' | 'MEMBERSHIP_FEE_UPDATED' | 'ANNUAL_FEE_CYCLE_COMPLETED' | 'OTHER';
   resourceType: string; // 'Application', 'User', 'Certificate', 'ExchangeRate', etc.
   resourceId: mongoose.Types.ObjectId | string;
   description: string;
@@ -48,6 +48,8 @@ const auditLogSchema = new Schema<IAuditLog>(
         'VIEW_APPLICANT',
         'GENERATE_CERTIFICATE',
         'EXCHANGE_RATE_UPDATE',
+        'MEMBERSHIP_FEE_UPDATED',
+        'ANNUAL_FEE_CYCLE_COMPLETED',
         'OTHER',
       ],
       required: true,

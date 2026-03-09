@@ -15,6 +15,7 @@ import membershipRoutes from './routes/membershipRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import { initializeDefaultGrades } from './models/MembershipGrade';
 import { AuditRetentionService } from './services/AuditRetentionService';
+import { AnnualMembershipFeeUpdateService } from './services/AnnualMembershipFeeUpdateService';
 import { validateRedirectUrl, addRedirectHelper } from './middleware/redirectValidation';
 import { validateFileAccess } from './middleware/fileAccessControl';
 import { authMiddleware } from './middleware/auth';
@@ -143,6 +144,8 @@ mongoose
     console.log('Default membership grades initialized');
     // Initialize audit retention policies
     AuditRetentionService.initializeRetention();
+    // Initialize annual membership fee update service
+    AnnualMembershipFeeUpdateService.getInstance().initializeAnnualFeeUpdate();
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);

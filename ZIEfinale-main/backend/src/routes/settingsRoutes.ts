@@ -3,6 +3,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { User } from '../models/User';
 import ExchangeRateApprovalService from '../services/ExchangeRateApprovalService';
 import { ExchangeRateService } from '../services/ExchangeRateService';
+import { AnnualMembershipFeeUpdateService } from '../services/AnnualMembershipFeeUpdateService';
 
 const router = Router();
 
@@ -274,6 +275,77 @@ router.post('/exchange-rate/:approvalId/reject', authMiddleware, async (req: Aut
     res.status(500).json({
       success: false,
       message: 'Failed to reject exchange rate update',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * ANNUAL MEMBERSHIP FEE UPDATE ENDPOINTS
+ */
+
+/**
+ * Get annual fee update service status
+ * GET /api/settings/annual-fees/status
+ * Access: SuperAdmin only
+ */
+router.get('/annual-fees/status', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'SuperAdmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only superadmins can access this endpoint',
+      });
+    }
+
+    const feeUpdateService = AnnualMembershipFeeUpdateService.getInstance();
+    const status = feeUpdateService.getStatus();
+
+    res.json({
+      success: true,
+      data: status,
+      message: 'Annual Fee Update Service status retrieved successfully',
+    });
+  } catch (error: any) {
+    console.error('Error getting annual fee update status:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get annual fee update status',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * Manually trigger annual membership fee update (for testing/admin)
+ * POST /api/settings/annual-fees/trigger
+ * Access: SuperAdmin only
+ * Description: Immediately executes the annual fee update for all members
+ */
+router.post('/annual-fees/trigger', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'SuperAdmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only superadmins can trigger annual fee updates',
+      });
+    }
+
+    const feeUpdateService = AnnualMembershipFeeUpdateService.getInstance();
+    const result = await feeUpdateService.forceExecuteNow();
+
+    res.json({
+      success: result.success,
+      message: result.message,
+      details: result.details,
+    });
+  } catch (error: any) {
+    console.error('Error triggering annual fee update:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to trigger annual fee update',
       error: error.message,
     });
   }
