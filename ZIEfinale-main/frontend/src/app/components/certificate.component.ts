@@ -125,25 +125,43 @@ export class CertificateComponent implements OnInit, OnDestroy {
       const images = certificateElement.querySelectorAll('img, image');
       const imagePromises = Array.from(images).map(img => {
         return new Promise((resolve) => {
-          if ((img as any).complete) {
+          const imgElement = img as any;
+          if (imgElement.complete) {
             resolve(true);
           } else {
-            (img as any).onload = () => resolve(true);
-            (img as any).onerror = () => resolve(true);
+            imgElement.onload = () => resolve(true);
+            imgElement.onerror = () => resolve(true);
           }
         });
       });
       await Promise.all(imagePromises);
+
+      // Add a small delay to ensure all styles are rendered
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Convert SVG/HTML to canvas
+      // Convert SVG/HTML to canvas with optimized settings for print
       const canvas = await html2canvas(certificateElement, {
         backgroundColor: '#fdfaf3',
-        scale: 2,
+        scale: 3,
         logging: false,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         windowWidth: 794,
-        windowHeight: 1123
+        windowHeight: 1123,
+        imageTimeout: 5000,
+        ignoreElements: (element) => {
+          if (element.classList?.contains('print:hidden')) return true;
+          if (element.tagName === 'BUTTON') return true;
+          return false;
+        },
+        onclone: (clonedDocument) => {
+          // Ensure images are visible in the cloned document
+          const clonedImages = clonedDocument.querySelectorAll('image');
+          clonedImages.forEach(img => {
+            (img as any).style.visibility = 'visible';
+            (img as any).style.opacity = '1';
+          });
+        }
       });
 
       // Create PDF with A4 dimensions
