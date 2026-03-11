@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { ApplicationService } from '../services/application.service';
 import { AuthService } from '../services/auth.service';
 import { MembershipService } from '../services/membership.service';
+import { AnalyticsReportService } from '../services/analytics-report.service';
 import { ApplicationStatsComponent, MembershipGradeStats } from '../components/application-stats.component';
 import { RefereeResponsesComponent } from '../components/referee-responses.component';
 import { ExchangeRateRequestComponent } from '../components/exchange-rate-request.component';
@@ -51,6 +52,42 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
           <div class="stat-card">
             <h3>Approved</h3>
             <p class="stat-value">{{ getStatusCount('Approved') }}</p>
+          </div>
+        </div>
+
+        <!-- Analytics Report Generator Card -->
+        <div class="analytics-report-section">
+          <div class="report-card">
+            <div class="report-header">
+              <span class="material-symbols-outlined report-icon">bar_chart</span>
+              <div class="report-title-section">
+                <h3 class="report-title">Generate Analytics Report</h3>
+                <p class="report-description">Download a comprehensive CSV report with system analytics</p>
+              </div>
+            </div>
+            
+            <div class="report-content">
+              <div class="report-metrics">
+                <div class="metric">
+                  <span class="metric-label">Report Includes:</span>
+                  <ul class="metric-list">
+                    <li>Total Applications (Approved, Rejected, Under Review)</li>
+                    <li>Application Approval Rate</li>
+                    <li>Payment Statistics (Pending, Completed, Failed)</li>
+                    <li>Average Processing Time</li>
+                    <li>Admin Performance Summary</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div class="button-group">
+                <button (click)="downloadAnalyticsReport()" class="btn-download" [disabled]="isGeneratingReport">
+                  <span class="material-symbols-outlined">download</span>
+                  <span *ngIf="!isGeneratingReport">Download CSV Report</span>
+                  <span *ngIf="isGeneratingReport">Generating...</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -317,6 +354,176 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
       text-align: center;
       color: #666;
       font-size: 16px;
+    }
+
+    /* Analytics Report Section Styles */
+    .analytics-report-section {
+      margin-bottom: 40px;
+    }
+
+    .report-card {
+      background-color: white;
+      border: 2px solid #B99532;
+      border-radius: 8px;
+      padding: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .report-card:hover {
+      box-shadow: 0 5px 15px rgba(185, 149, 50, 0.15);
+    }
+
+    .report-header {
+      display: flex;
+      gap: 15px;
+      padding: 20px;
+      background-color: #f8f8f8;
+      border-bottom: 2px solid #B99532;
+    }
+
+    .report-icon {
+      font-size: 40px;
+      color: #B99532;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .report-title-section {
+      text-align: left;
+      flex: 1;
+    }
+
+    .report-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #004A59;
+      margin: 0 0 5px 0;
+    }
+
+    .report-description {
+      font-size: 12px;
+      color: #666;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .report-content {
+      padding: 20px;
+    }
+
+    .report-metrics {
+      margin-bottom: 20px;
+    }
+
+    .metric {
+      text-align: left;
+    }
+
+    .metric-label {
+      font-weight: 700;
+      color: #004A59;
+      font-size: 13px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .metric-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .metric-list li {
+      font-size: 12px;
+      color: #555;
+      padding: 4px 0 4px 15px;
+      position: relative;
+    }
+
+    .metric-list li:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #B99532;
+      font-weight: 700;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+      margin-top: 15px;
+    }
+
+    .btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 25px;
+      background-color: #B99532;
+      color: white;
+      border: 2px solid #B99532;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-download:hover:not(:disabled) {
+      background-color: #a58628;
+      border-color: #004A59;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(4, 74, 89, 0.2);
+    }
+
+    .btn-download:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-download span {
+      font-size: 18px;
+      font-variation-settings: 'wght' 600;
+    }
+
+    @media (max-width: 768px) {
+      .report-header {
+        gap: 10px;
+        padding: 15px;
+      }
+
+      .report-icon {
+        font-size: 32px;
+      }
+
+      .report-title {
+        font-size: 14px;
+      }
+
+      .report-description {
+        font-size: 11px;
+      }
+
+      .report-content {
+        padding: 15px;
+      }
+
+      .metric-list li {
+        font-size: 11px;
+        padding: 3px 0 3px 12px;
+      }
+
+      .btn-download {
+        padding: 10px 20px;
+        font-size: 13px;
+      }
+
+      .btn-download span {
+        font-size: 16px;
+      }
     }
 
     @media (max-width: 768px) {
@@ -699,6 +906,7 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
 export class AdminDashboardComponent implements OnInit {
   applications: any[] = [];
   canAccessAuditTrail = false;
+  isGeneratingReport = false;
 
   // Exchange rate management properties
   exchangeRate: number = 26.5;
@@ -712,6 +920,7 @@ export class AdminDashboardComponent implements OnInit {
     private applicationService: ApplicationService,
     private authService: AuthService,
     private membershipService: MembershipService,
+    private analyticsReportService: AnalyticsReportService,
     private router: Router
   ) {}
 
@@ -803,6 +1012,23 @@ export class AdminDashboardComponent implements OnInit {
   logout(): void {
     // Use logoutAndNavigate to properly clear browser history and navigate to landing page
     this.authService.logoutAndNavigate();
+  }
+
+  /**
+   * Download analytics report as CSV
+   */
+  downloadAnalyticsReport(): void {
+    this.isGeneratingReport = true;
+    this.analyticsReportService.downloadAnalyticsCSV()
+      .then(() => {
+        console.log('Analytics report downloaded successfully');
+      })
+      .catch((error) => {
+        console.error('Failed to download analytics report:', error);
+      })
+      .finally(() => {
+        this.isGeneratingReport = false;
+      });
   }
 
   /**

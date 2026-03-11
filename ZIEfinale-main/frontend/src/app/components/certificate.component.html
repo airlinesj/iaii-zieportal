@@ -1,51 +1,238 @@
-<div class="certificate-wrapper">
-  <div class="certificate-container" id="certificate">
-    <div class="border-outer">
-      <div class="border-inner">
-        
-        <div class="header">
-          <img src="assets/zielogo.png" alt="ZIE Logo" class="logo">
-          <h1>THE ZIMBABWE INSTITUTION</h1>
-          <h2>OF</h2>
-          <h3>ENGINEERS</h3>
-          <p class="founded">Founded 1944 — Incorporated 1953</p>
-        </div>
+<!-- Main Container with Tailwind Styling for Screen View -->
+<div class="flex justify-center items-start bg-gray-800 min-h-screen py-8 print:bg-white print:py-0 print:block">
+  
+  <!-- Certificate Container: Hidden borders for print, visible floating effect for screen -->
+  <div id="certificate-page" 
+       class="w-[210mm] h-[297mm] bg-amber-50 shadow-2xl print:shadow-none print:w-full print:h-full relative"
+       style="aspect-ratio: 210/297;">
 
-        <div class="content">
-          <p class="certify-text">We hereby Certify that</p>
-          <h2 class="applicant-name">{{ applicant?.name }}</h2>
-          
-          <p class="admission-text">was admitted as</p>
-          <h2 class="membership-level">{{ applicant?.grade | uppercase }}</h2>
-          
-          <p class="division-text" *ngIf="applicant?.division">Division: <span class="division-value">{{ applicant?.division }}</span></p>
-          
-          <p class="institution-text">of the Institution</p>
-          <p class="date-row">on <span class="date-value">{{ applicant?.interviewPassedDate | date:'dd MMMM yyyy' }}</span></p>
-        </div>
+    <!-- SVG Certificate Frame (A4 dimensions: 210mm x 297mm) -->
+    <svg #certificateSvg 
+         viewBox="0 0 210 297" 
+         xmlns="http://www.w3.org/2000/svg"
+         class="w-full h-full"
+         style="display: block;">
 
-        <div class="footer">
-          <div class="seal"></div>
-          
-          <div class="signatures">
-              <div class="sig-line"><span>President</span></div>
-              <div class="sig-line"><span>Board Member</span></div>
-              <div class="sig-line"><span>Chief Executive Officer</span></div>
-          </div>
-        </div>
+      <!-- Background -->
+      <rect width="210" height="297" fill="#fdfaf3"/>
 
-        <div class="reg-number">
-          ZIE {{ applicant?.registrationNumber }}
-        </div>
-        
-      </div>
-    </div>
+      <!-- Double Border Structure -->
+      <!-- Outer Border -->
+      <rect x="8" y="8" width="194" height="281" stroke="#1e3a8a" fill="none" stroke-width="1.5"/>
+      <!-- Inner Border -->
+      <rect x="10" y="10" width="190" height="277" stroke="#1e3a8a" fill="none" stroke-width="1"/>
+
+      <!-- Header Section -->
+      <!-- Institution Logo - Using actual ZIE logo with transparent background -->
+      <image x="88" y="8" width="34" height="34" href="assets/zielogo.png" preserveAspectRatio="xMidYMid meet" style="image-rendering: crisp-edges;"/>
+
+      <!-- Institution Name -->
+      <text x="105" y="58" 
+            text-anchor="middle" 
+            font-size="7.5" 
+            font-weight="bold" 
+            fill="#1e3a8a"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        THE ZIMBABWE INSTITUTION OF ENGINEERS
+      </text>
+
+      <!-- Founded Information -->
+      <text x="105" y="65" 
+            text-anchor="middle" 
+            font-size="3" 
+            fill="#666"
+            font-style="italic"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        Founded 1944 — Incorporated 1953
+      </text>
+
+      <!-- Certificate Statement Section -->
+      <!-- "This is to Certify that" -->
+      <text x="105" y="85" 
+            text-anchor="middle" 
+            font-size="4.5" 
+            fill="#333"
+            font-style="italic"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        This is to Certify that
+      </text>
+
+      <!-- Applicant Name (Main Focus) -->
+      <text x="105" y="105" 
+            text-anchor="middle" 
+            font-size="11" 
+            font-weight="bold" 
+            fill="#000"
+            font-style="italic"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        {{ applicantName }}
+      </text>
+
+      <!-- Dotted Line Under Applicant Name -->
+      <line x1="50" y1="108" x2="160" y2="108" 
+            stroke="#000" 
+            stroke-width="0.4"
+            stroke-dasharray="1,1"/>
+
+      <!-- Membership Grade Statement -->
+      <text x="105" y="120" 
+            text-anchor="middle" 
+            font-size="4.5" 
+            fill="#333"
+            font-style="italic"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        has been admitted as a
+      </text>
+
+      <!-- Membership Grade -->
+      <text x="105" y="135" 
+            text-anchor="middle" 
+            font-size="9" 
+            font-weight="bold" 
+            fill="#1e3a8a"
+            font-family="'EB Garamond', 'Times New Roman', serif"
+            text-transform="uppercase">
+        {{ membershipGrade }}
+      </text>
+
+      <!-- Dotted Line Under Grade -->
+      <line x1="55" y1="138" x2="155" y2="138" 
+            stroke="#000" 
+            stroke-width="0.4"
+            stroke-dasharray="1,1"/>
+
+      <!-- Institution Statement -->
+      <text x="105" y="150" 
+            text-anchor="middle" 
+            font-size="4.5" 
+            fill="#333"
+            font-style="italic"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        of The Zimbabwe Institution of Engineers
+      </text>
+
+      <!-- Date Admitted Section -->
+      <text x="105" y="165" 
+            text-anchor="middle" 
+            font-size="4.5" 
+            fill="#333"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        on this date:
+      </text>
+
+      <text x="105" y="175" 
+            text-anchor="middle" 
+            font-size="5" 
+            font-weight="bold" 
+            fill="#000"
+            font-family="'EB Garamond', 'Times New Roman', serif">
+        {{ dateAdmitted }}
+      </text>
+
+      <!-- Certificate ID -->
+      <text x="105" y="188" 
+            text-anchor="middle" 
+            font-size="3.5" 
+            fill="#666"
+            font-family="monospace">
+        Certificate No: {{ certId }}
+      </text>
+
+      <!-- Decorative Seal Circle - Large and Prominent -->
+      <g transform="translate(105, 210)">
+        <!-- Outer red border circle -->
+        <circle cx="0" cy="0" r="16" fill="none" stroke="#c41e3a" stroke-width="1.5"/>
+        <!-- Inner red circle -->
+        <circle cx="0" cy="0" r="14.5" fill="none" stroke="#c41e3a" stroke-width="0.8"/>
+        <!-- Filled background for contrast -->
+        <circle cx="0" cy="0" r="13" fill="#fdfaf3"/>
+        <!-- Seal border decoration -->
+        <circle cx="0" cy="0" r="12" fill="none" stroke="#c41e3a" stroke-width="0.4"/>
+        <!-- Main ZIE text -->
+        <text x="0" y="2" 
+              text-anchor="middle" 
+              font-size="6" 
+              font-weight="bold" 
+              fill="#c41e3a"
+              font-family="'EB Garamond', 'Times New Roman', serif">
+          ZIE
+        </text>
+        <!-- Decorative dots around the seal -->
+        <circle cx="0" cy="-11" r="0.6" fill="#c41e3a"/>
+        <circle cx="7.8" cy="-8.5" r="0.6" fill="#c41e3a"/>
+        <circle cx="11" cy="-4" r="0.6" fill="#c41e3a"/>
+        <circle cx="11" cy="4" r="0.6" fill="#c41e3a"/>
+        <circle cx="7.8" cy="8.5" r="0.6" fill="#c41e3a"/>
+        <circle cx="0" cy="11" r="0.6" fill="#c41e3a"/>
+        <circle cx="-7.8" cy="8.5" r="0.6" fill="#c41e3a"/>
+        <circle cx="-11" cy="4" r="0.6" fill="#c41e3a"/>
+        <circle cx="-11" cy="-4" r="0.6" fill="#c41e3a"/>
+        <circle cx="-7.8" cy="-8.5" r="0.6" fill="#c41e3a"/>
+      </g>
+
+      <!-- Signature Section -->
+      <!-- President Signature Area -->
+      <g transform="translate(0, 235)">
+        <!-- President Signature Line -->
+        <line x1="25" y1="0" x2="65" y2="0" stroke="#000" stroke-width="0.5"/>
+        <text x="45" y="6" 
+              text-anchor="middle" 
+              font-size="2.5" 
+              font-weight="bold"
+              font-family="'EB Garamond', 'Times New Roman', serif">
+          PRESIDENT
+        </text>
+      </g>
+
+      <!-- Board Member Signature Area -->
+      <g transform="translate(0, 235)">
+        <!-- Board Member Signature Line -->
+        <line x1="145" y1="0" x2="185" y2="0" stroke="#000" stroke-width="0.5"/>
+        <text x="165" y="6" 
+              text-anchor="middle" 
+              font-size="2.5" 
+              font-weight="bold"
+              font-family="'EB Garamond', 'Times New Roman', serif">
+          BOARD MEMBER
+        </text>
+      </g>
+
+      <!-- Footer Information -->
+      <text x="105" y="290" 
+            text-anchor="middle" 
+            font-size="2.5" 
+            fill="#999"
+            font-family="monospace">
+        Print Date: {{ currentYear }}
+      </text>
+
+    </svg>
+
   </div>
 
-  <div class="actions">
-    <button (click)="downloadPDF()" class="btn-download">Download Certificate as PDF</button>
-    <button (click)="backToUpdates()" class="btn-back">Back to Updates</button>
-  </div>
+</div>
 
-  <div class="error-message" *ngIf="error">{{ error }}</div>
+<!-- Action Buttons (Hidden on Print) - Large and Prominent -->
+<div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 flex gap-8 print:hidden z-50">
+  <button (click)="printCertificate()" 
+          class="px-10 py-5 bg-blue-600 text-white font-extrabold text-xl rounded-2xl hover:bg-blue-800 active:bg-blue-900 transition-all shadow-2xl hover:shadow-blue-500/60 hover:scale-110 transform duration-150 border-2 border-blue-700 cursor-pointer">
+    🖨️ PRINT
+  </button>
+  <button (click)="generatePDF()" 
+          class="px-10 py-5 bg-green-600 text-white font-extrabold text-xl rounded-2xl hover:bg-green-800 active:bg-green-900 transition-all shadow-2xl hover:shadow-green-500/60 hover:scale-110 transform duration-150 border-2 border-green-700 cursor-pointer">
+    ⬇️ DOWNLOAD
+  </button>
+</div>
+
+<!-- Error Message Display -->
+<div *ngIf="error" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg print:hidden">
+  {{ error }}
+</div>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 print:hidden">
+  <div class="bg-white p-8 rounded-lg">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <p class="mt-4 text-gray-700">Loading certificate...</p>
+  </div>
 </div>

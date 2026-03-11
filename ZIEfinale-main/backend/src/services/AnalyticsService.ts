@@ -12,6 +12,13 @@ export interface AdminApprovalStats {
   approvalRate: number;
 }
 
+export interface PaymentStats {
+  totalPaymentsPending: number;
+  totalPaymentsCompleted: number;
+  totalPaymentsFailed: number;
+  completionRate: number;
+}
+
 export interface SystemAnalytics {
   totalApplications: number;
   totalApproved: number;
@@ -19,6 +26,7 @@ export interface SystemAnalytics {
   totalUnderReview: number;
   approvalRate: number;
   averageProcessingTime: number;
+  paymentStats: PaymentStats;
   adminStats: AdminApprovalStats[];
   topPerformingAdmin?: AdminApprovalStats;
 }
@@ -32,7 +40,57 @@ export interface MonthlyReport {
   generatedAt: Date;
 }
 
+export interface AnalyticsReportData {
+  generatedAt: Date;
+  generatedBy?: string;
+  summary: SystemAnalytics;
+  reportPeriod: {
+    startDate?: Date;
+    endDate?: Date;
+  };
+}
+
 export class AnalyticsService {
+  /**
+   * Get payment statistics
+   */
+  static async getPaymentStats(
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<PaymentStats> {
+    const query: any = {};
+    if (startDate || endDate) {
+      query.paymentDate = {};
+      if (startDate) query.paymentDate.$gte = startDate;
+      if (endDate) query.paymentDate.$lte = endDate;
+    }
+
+    const totalPaymentsPending = await Application.countDocuments({
+      paymentStatus: 'pending',
+      ...query,
+    });
+
+    const totalPaymentsCompleted = await Application.countDocuments({
+      paymentStatus: 'completed',
+      ...query,
+    });
+
+    const totalPaymentsFailed = await Application.countDocuments({
+      paymentStatus: 'failed',
+      ...query,
+    });
+
+    const totalPayments = totalPaymentsPending + totalPaymentsCompleted + totalPaymentsFailed;
+    const completionRate = totalPayments > 0 ? (totalPaymentsCompleted / totalPayments) * 100 : 0;
+
+    return {
+      totalPaymentsPending,
+      totalPaymentsCompleted,
+      totalPaymentsFailed,
+      completionRate,
+    };
+  }
+
   /**
    * Get approval statistics for all admins
    */
@@ -142,6 +200,9 @@ export class AnalyticsService {
     const processed = approved + rejected;
     const approvalRate = processed > 0 ? (approved / processed) * 100 : 0;
 
+    // Get payment stats
+    const paymentStats = await this.getPaymentStats(startDate, endDate);
+
     // Get admin stats
     const adminStats = await this.getAdminApprovalStats(startDate, endDate);
 
@@ -155,6 +216,7 @@ export class AnalyticsService {
       totalUnderReview: underReview,
       approvalRate,
       averageProcessingTime: await this.getAverageProcessingTime(),
+      paymentStats,
       adminStats,
       topPerformingAdmin,
     };
@@ -203,6 +265,27 @@ export class AnalyticsService {
       endDate,
       analytics,
       generatedAt: new Date(),
+    };
+  }
+
+  /**
+   * Generate analytics report data for CSV export
+   */
+  static async generateAnalyticsReport(
+    startDate?: Date,
+    endDate?: Date,
+    generatedBy?: string
+  ): Promise<AnalyticsReportData> {
+    const summary = await this.getSystemAnalytics(startDate, endDate);
+
+    return {
+      generatedAt: new Date(),
+      generatedBy,
+      summary,
+      reportPeriod: {
+        startDate,
+        endDate,
+      },
     };
   }
 

@@ -32,6 +32,34 @@ import { RouterModule } from '@angular/router';
           </a>
         </div>
 
+        <!-- About Section -->
+        <div class="info-section">
+          <div class="info-divider"></div>
+          <h2 class="info-title">About ZIE</h2>
+          <p class="info-text">
+            The Zimbabwe Institution of Engineers is the premier professional body representing engineers in Zimbabwe. 
+            We are dedicated to promoting excellence in engineering practice, professional development, and ethical standards.
+          </p>
+          
+          <div class="info-grid">
+            <div class="info-card">
+              <span class="material-symbols-outlined info-icon">school</span>
+              <h3>Professional Development</h3>
+              <p>Advance your engineering career through continuous learning and professional growth opportunities.</p>
+            </div>
+            <div class="info-card">
+              <span class="material-symbols-outlined info-icon">handshake</span>
+              <h3>Networking</h3>
+              <p>Connect with fellow engineers and industry leaders to build meaningful professional relationships.</p>
+            </div>
+            <div class="info-card">
+              <span class="material-symbols-outlined info-icon">how_to_vote</span>
+              <h3>Standards & Ethics</h3>
+              <p>Maintain the highest standards of professional conduct and engineering ethics in practice.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="features">
           <div class="feature-item">
             <span class="feature-icon">✓</span>
@@ -357,6 +385,119 @@ import { RouterModule } from '@angular/router';
         font-size: 20px;
       }
     }
+
+    /* Info Section Styles */
+    .info-section {
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 2.5px solid #B99532;
+    }
+
+    .info-divider {
+      height: 2.5px;
+      background-color: #B99532;
+      margin-bottom: 20px;
+    }
+
+    .info-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #004A59;
+      margin: 0 0 15px 0;
+      text-align: center;
+    }
+
+    .info-text {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 30px;
+      text-align: center;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .info-card {
+      background-color: #f8f8f8;
+      border: 1.5px solid #B99532;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+      box-shadow: 0 5px 15px rgba(185, 149, 50, 0.15);
+      transform: translateY(-5px);
+      border-color: #004A59;
+    }
+
+    .info-icon {
+      font-size: 40px;
+      color: #B99532;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .info-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #004A59;
+      margin: 0 0 10px 0;
+    }
+
+    .info-card p {
+      font-size: 12px;
+      color: #666;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .info-section {
+        margin-top: 30px;
+        padding-top: 20px;
+      }
+
+      .info-title {
+        font-size: 20px;
+      }
+
+      .info-text {
+        font-size: 12px;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .info-card {
+        padding: 15px;
+      }
+
+      .info-icon {
+        font-size: 32px;
+      }
+
+      .info-card h3 {
+        font-size: 14px;
+      }
+
+      .info-card p {
+        font-size: 11px;
+      }
+    }
   `]
 })
-export class LandingComponent {}
+export class LandingComponent {
+}

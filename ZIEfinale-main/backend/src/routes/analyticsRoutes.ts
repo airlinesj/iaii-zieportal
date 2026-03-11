@@ -524,4 +524,30 @@ router.get('/export/info', authMiddleware, auditAccessMiddleware, async (req: Au
   }
 });
 
+// Generate analytics report CSV export (Admin/SuperAdmin only)
+router.get('/export/analytics-csv', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || (user.role !== 'Admin' && user.role !== 'SuperAdmin')) {
+      return res.status(403).json({
+        message: 'Only admins can generate analytics reports.',
+      });
+    }
+
+    const { startDate, endDate } = req.query;
+
+    const csv = await ReportExportService.generateAnalyticsCSV(
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined
+    );
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="analytics-report-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    console.error('Error exporting analytics CSV:', error);
+    res.status(500).json({ message: 'Error exporting analytics CSV', error });
+  }
+});
+
 export default router;

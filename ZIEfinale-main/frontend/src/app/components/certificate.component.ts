@@ -1,23 +1,33 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApplicationService } from '../services/application.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import * as jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 @Component({
   selector: 'app-certificate',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './certificate.component.html',
-  styleUrls: ['./certificate.component.css']
+  styleUrls: ['./certificate.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class CertificateComponent implements OnInit, OnDestroy {
-  applicant: any;
+  // Certificate Data Properties
+  @ViewChild('certificateSvg', { static: false }) certificateSvg!: ElementRef<SVGSVGElement>;
+  
+  applicantName: string = '';
+  membershipGrade: string = '';
+  dateAdmitted: string = '';
+  certId: string = '';
+  
   loading: boolean = true;
   error: string | null = null;
+  currentYear: number = new Date().getFullYear();
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -27,7 +37,7 @@ export class CertificateComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadCertificate();
+    this.loadCertificateData();
   }
 
   ngOnDestroy(): void {
@@ -35,10 +45,14 @@ export class CertificateComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadCertificate(): void {
+  /**
+   * Load certificate data from the API based on application ID
+   */
+  loadCertificateData(): void {
     const applicationId = this.route.snapshot.paramMap.get('id');
     if (!applicationId) {
       this.error = 'Application ID not found';
+      this.loading = false;
       return;
     }
 
@@ -46,7 +60,7 @@ export class CertificateComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: any) => {
-          this.applicant = data;
+          this.mapApplicationDataToCertificate(data);
           this.loading = false;
         },
         error: (err: any) => {
@@ -57,78 +71,106 @@ export class CertificateComponent implements OnInit, OnDestroy {
       });
   }
 
-  downloadPDF(): void {
-    const element = document.getElementById('certificate');
-    if (!element) {
-      this.error = 'Certificate element not found';
-      return;
+  /**
+   * Maps application data from API to certificate display properties
+   */
+  private mapApplicationDataToCertificate(data: any): void {
+    try {
+      this.applicantName = data?.name || '[Applicant Name]';
+      this.membershipGrade = data?.grade?.toUpperCase() || '[Membership Grade]';
+      this.dateAdmitted = data?.interviewPassedDate 
+        ? this.formatDate(new Date(data.interviewPassedDate))
+        : '[Date of Admission]';
+      this.certId = data?.registrationNumber || '000001';
+    } catch (err) {
+      console.error('Error mapping certificate data:', err);
+      this.error = 'Error processing certificate data';
     }
+  }
 
-    // Scroll to top of the certificate wrapper to ensure full capture
-    const wrapper = document.querySelector('.certificate-wrapper');
-    if (wrapper) {
-      wrapper.scrollTop = 0;
-    }
-    window.scrollTo(0, 0);
+  /**
+   * Format date to readable format (DD Month YYYY)
+   */
+  private formatDate(date: Date): string {
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return date.toLocaleDateString('en-US', options);
+  }
 
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-      // Use html2canvas to capture the certificate
-      html2canvas(element, {
-        backgroundColor: '#fdfbf4',
+  /**
+   * Open browser print dialog for the certificate
+   */
+  printCertificate(): void {
+    window.print();
+  }
+
+  /**
+   * Generate and download certificate as PDF using jsPDF
+   * Converts SVG directly to PDF maintaining high quality
+   */
+  async generatePDF(): Promise<void> {
+    try {
+      const certificateElement = document.getElementById('certificate-page');
+      if (!certificateElement) {
+        this.error = 'Certificate element not found';
+        return;
+      }
+
+      this.error = null;
+      
+      // Wait for images to load before converting to canvas
+      const images = certificateElement.querySelectorAll('img, image');
+      const imagePromises = Array.from(images).map(img => {
+        return new Promise((resolve) => {
+          if ((img as any).complete) {
+            resolve(true);
+          } else {
+            (img as any).onload = () => resolve(true);
+            (img as any).onerror = () => resolve(true);
+          }
+        });
+      });
+      await Promise.all(imagePromises);
+      
+      // Convert SVG/HTML to canvas
+      const canvas = await html2canvas(certificateElement, {
+        backgroundColor: '#fdfaf3',
         scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
-      })
-        .then((canvas: HTMLCanvasElement) => {
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF.jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-          });
+        windowWidth: 794,
+        windowHeight: 1123
+      });
 
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          
-          // Calculate aspect ratio to fit certificate on A4
-          const imgWidth = canvas.width;
-          const imgHeight = canvas.height;
-          
-          // Use width-based scaling with padding
-          const margin = 10; // 10mm margin
-          const availableWidth = pdfWidth - (margin * 2);
-          const availableHeight = pdfHeight - (margin * 2);
-          
-          const widthRatio = availableWidth / (imgWidth / 2); // divide by scale
-          const heightRatio = availableHeight / (imgHeight / 2);
-          const ratio = Math.min(widthRatio, heightRatio);
-          
-          const scaledWidth = (imgWidth / 2) * ratio;
-          const scaledHeight = (imgHeight / 2) * ratio;
-          
-          // Center on page
-          const xOffset = (pdfWidth - scaledWidth) / 2;
-          const yOffset = (pdfHeight - scaledHeight) / 2;
+      // Create PDF with A4 dimensions
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-          pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
+      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = 210;
+      const pageHeight = 297;
 
-          const filename = `ZIE_Certificate_${this.applicant?.registrationNumber || 'Unknown'}.pdf`;
-          pdf.save(filename);
-        })
-        .catch((err: any) => {
-          console.error('Error generating PDF:', err);
-          this.error = 'Failed to generate PDF. Please try again.';
-        });
-    }, 100);
+      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+      
+      const filename = `ZIE_Certificate_${this.certId}_${this.currentYear}.pdf`;
+      pdf.save(filename);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      this.error = 'Failed to generate PDF. Please try again.';
+    }
   }
 
-  backToUpdates(): void {
-    this.router.navigate(['/updates']);
+  /**
+   * Download certificate as PDF (alias for generatePDF)
+   */
+  downloadPDF(): void {
+    this.generatePDF();
   }
 }

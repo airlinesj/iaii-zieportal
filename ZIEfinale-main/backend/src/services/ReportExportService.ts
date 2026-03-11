@@ -1,6 +1,7 @@
 import { AuditLog } from '../models/AuditLog';
 import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
+import { AnalyticsService } from './AnalyticsService';
 
 export interface ExportOptions {
   startDate?: Date;
@@ -10,6 +11,73 @@ export interface ExportOptions {
 }
 
 export class ReportExportService {
+  /**
+   * Generate CSV export of analytics report
+   */
+  static async generateAnalyticsCSV(startDate?: Date, endDate?: Date): Promise<string> {
+    try {
+      const report = await AnalyticsService.generateAnalyticsReport(startDate, endDate);
+      const { summary, reportPeriod } = report;
+
+      // Build CSV content with multiple sections
+      const lines: string[] = [];
+
+      // Header
+      lines.push('Zimbabwe Institution of Engineers - Analytics Report');
+      lines.push(`Generated: ${new Date().toISOString()}`);
+      if (reportPeriod.startDate || reportPeriod.endDate) {
+        lines.push(
+          `Report Period: ${reportPeriod.startDate?.toLocaleDateString() || 'N/A'} to ${reportPeriod.endDate?.toLocaleDateString() || 'N/A'}`
+        );
+      }
+      lines.push('');
+
+      // System Overview
+      lines.push('SYSTEM OVERVIEW');
+      lines.push('Metric,Value');
+      lines.push(`Total Applications,${summary.totalApplications}`);
+      lines.push(`Approved Applications,${summary.totalApproved}`);
+      lines.push(`Rejected Applications,${summary.totalRejected}`);
+      lines.push(`Under Review Applications,${summary.totalUnderReview}`);
+      lines.push(`Approval Rate,${summary.approvalRate.toFixed(2)}%`);
+      lines.push(`Average Processing Time,${summary.averageProcessingTime.toFixed(2)} hours`);
+      lines.push('');
+
+      // Payment Statistics
+      lines.push('PAYMENT STATISTICS');
+      lines.push('Status,Count');
+      lines.push(`Pending Payments,${summary.paymentStats.totalPaymentsPending}`);
+      lines.push(`Completed Payments,${summary.paymentStats.totalPaymentsCompleted}`);
+      lines.push(`Failed Payments,${summary.paymentStats.totalPaymentsFailed}`);
+      lines.push(`Payment Completion Rate,${summary.paymentStats.completionRate.toFixed(2)}%`);
+      lines.push('');
+
+      // Admin Performance
+      if (summary.adminStats && summary.adminStats.length > 0) {
+        lines.push('ADMIN PERFORMANCE');
+        lines.push('Admin Email,Admin Name,Total Approvals,Total Rejections,Approval Rate (%)');
+        summary.adminStats.forEach((admin) => {
+          const escapeCsvValue = (value: string): string => {
+            if (!value) return '';
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          };
+
+          lines.push(
+            `${escapeCsvValue(admin.adminEmail)},${escapeCsvValue(admin.adminName || '')},${admin.totalApprovals},${admin.totalRejections},${admin.approvalRate.toFixed(2)}`
+          );
+        });
+      }
+
+      return lines.join('\n');
+    } catch (error) {
+      console.error('Error generating analytics CSV:', error);
+      throw error;
+    }
+  }
+
   /**
    * Generate CSV export of audit logs
    */
