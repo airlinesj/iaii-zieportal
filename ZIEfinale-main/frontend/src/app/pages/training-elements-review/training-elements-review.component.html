@@ -1,0 +1,310 @@
+<div class="training-elements-review-container">
+  <div class="header-section">
+    <h1>Training Elements Review</h1>
+    <p class="subtitle">Manage and review training elements submissions from CPD applicants</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-banner">
+    <span>{{ error }}</span>
+    <button (click)="error = ''" class="close-btn">&times;</button>
+  </div>
+
+  <!-- Controls Section -->
+  <div class="controls-section">
+    <div class="search-filter-row">
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Search by applicant name, company, or course..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          class="search-input"
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <div class="filter-group">
+        <select [(ngModel)]="statusFilter" (change)="onStatusFilterChange()" class="filter-select">
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="needs_clarification">Needs Clarification</option>
+        </select>
+
+        <select [(ngModel)]="sortBy" (change)="onSortChange()" class="sort-select">
+          <option value="submittedAt">Newest First</option>
+          <option value="applicantName">Applicant Name</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+
+      <div class="stats-box">
+        <span class="stat">Total: <strong>{{ reviews.length }}</strong></span>
+        <span class="stat">Filtered: <strong>{{ filteredReviews.length }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading reviews...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredReviews.length === 0" class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>No training elements reviews found</h3>
+    <p>There are no reviews matching your current filters.</p>
+  </div>
+
+  <!-- Reviews Grid -->
+  <div *ngIf="!loading && filteredReviews.length > 0" class="reviews-grid">
+    <div *ngFor="let review of filteredReviews" class="review-card" [ngClass]="'status-' + review.reviewStatus">
+      <!-- Status Badge -->
+      <div class="card-header">
+        <span [ngClass]="getStatusBadgeClass(review.reviewStatus)" class="status-badge">
+          {{ getStatusLabel(review.reviewStatus) }}
+        </span>
+        <span class="submitted-date">{{ formatDate(review.submittedAt) }}</span>
+      </div>
+
+      <!-- Applicant Info -->
+      <div class="card-content">
+        <div class="info-section">
+          <h3 class="applicant-name">{{ review.applicantName }}</h3>
+          <div class="company-info">
+            <span class="label">Company:</span>
+            <span class="value">{{ review.company }}</span>
+          </div>
+          <div class="email-info">
+            <span class="label">Email:</span>
+            <a href="mailto:{{ review.email }}" class="email-link">{{ review.email }}</a>
+          </div>
+        </div>
+
+        <!-- Course Info -->
+        <div class="course-section">
+          <div class="course-title">
+            <span class="label">Course:</span>
+            <span class="value">{{ review.courseTitle }}</span>
+          </div>
+          <div class="course-duration">
+            <span class="label">Duration:</span>
+            <span class="value">{{ review.courseDuration }} days</span>
+          </div>
+        </div>
+
+        <!-- Training Elements Summary -->
+        <div class="elements-summary">
+          <span class="label">Training Elements:</span>
+          <div class="element-tags">
+            <span *ngFor="let code of getSelectedTrainingElements(review.trainingElements)" class="element-tag">
+              {{ code }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Review Notes (if exists) -->
+        <div *ngIf="review.reviewNotes" class="review-notes">
+          <span class="label">Review Notes:</span>
+          <p class="notes-text">{{ review.reviewNotes }}</p>
+        </div>
+      </div>
+
+      <!-- Card Footer with Actions -->
+      <div class="card-footer">
+        <button class="btn-view-details" (click)="openDetailModal(review)">
+          View Details & Act
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div *ngIf="showDetailModal && selectedReview" class="modal-overlay" (click)="closeDetailModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Training Elements Review - {{ selectedReview.applicantName }}</h2>
+        <button class="close-modal-btn" (click)="closeDetailModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Applicant Details -->
+        <div class="detail-section">
+          <h3>Applicant Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Name:</span>
+              <span class="value">{{ selectedReview.applicantName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Company:</span>
+              <span class="value">{{ selectedReview.company }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Email:</span>
+              <span class="value">
+                <a href="mailto:{{ selectedReview.email }}">{{ selectedReview.email }}</a>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Submission Date:</span>
+              <span class="value">{{ formatDate(selectedReview.submittedAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Details -->
+        <div class="detail-section">
+          <h3>Course Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Course Title:</span>
+              <span class="value">{{ selectedReview.courseTitle }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Duration:</span>
+              <span class="value">{{ selectedReview.courseDuration }} days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Training Elements Detailed View -->
+        <div class="detail-section">
+          <h3>Training Elements Selected</h3>
+          <div class="elements-detailed">
+            <div *ngFor="let element of trainingElementsOptions" class="element-check">
+              <input
+                type="checkbox"
+                [id]="element.code"
+                [checked]="selectedReview.trainingElements[element.code] || false"
+                disabled
+              />
+              <label [for]="element.code">
+                <strong>{{ element.code }}:</strong> {{ element.label }}
+                <span class="category-badge">{{ element.category }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review History -->
+        <div *ngIf="selectedReview.reviewedAt" class="detail-section">
+          <h3>Review History</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Reviewed By:</span>
+              <span class="value">{{ selectedReview.reviewedByName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Reviewed At:</span>
+              <span class="value">{{ formatDate(selectedReview.reviewedAt) }}</span>
+            </div>
+            <div class="detail-item full-width">
+              <span class="label">Review Status:</span>
+              <span [ngClass]="getStatusBadgeClass(selectedReview.reviewStatus)" class="status-badge">
+                {{ getStatusLabel(selectedReview.reviewStatus) }}
+              </span>
+            </div>
+            <div *ngIf="selectedReview.reviewNotes" class="detail-item full-width">
+              <span class="label">Notes:</span>
+              <p class="notes-text">{{ selectedReview.reviewNotes }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Section -->
+        <div *ngIf="selectedReview.reviewStatus === 'pending'" class="detail-section action-section">
+          <h3>Review Actions</h3>
+
+          <!-- Approve Action -->
+          <div *ngIf="!selectedAction" class="action-buttons">
+            <button class="btn btn-approve" (click)="selectAction('approve')" [disabled]="loading">
+              ✓ Approve Review
+            </button>
+            <button class="btn btn-reject" (click)="selectAction('reject')" [disabled]="loading">
+              ✗ Reject Review
+            </button>
+            <button class="btn btn-clarify" (click)="selectAction('clarify')" [disabled]="loading">
+              ? Request Clarification
+            </button>
+          </div>
+
+          <!-- Reject Form -->
+          <div *ngIf="selectedAction === 'reject'" class="action-form">
+            <form [formGroup]="actionForm" (ngSubmit)="rejectReview()">
+              <div class="form-group">
+                <label>Reason for Rejection *</label>
+                <textarea
+                  formControlName="notes"
+                  placeholder="Explain why the training elements review is being rejected..."
+                  rows="4"
+                  class="form-control"
+                ></textarea>
+                <div *ngIf="actionForm.get('notes')?.invalid && actionForm.get('notes')?.touched" class="error-text">
+                  Rejection reason is required
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-reject" [disabled]="actionForm.invalid || loading">
+                  Confirm Rejection
+                </button>
+                <button type="button" class="btn btn-cancel" (click)="selectedAction = null">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Clarification Form -->
+          <div *ngIf="selectedAction === 'clarify'" class="action-form">
+            <form [formGroup]="actionForm" (ngSubmit)="requestClarification()">
+              <div class="form-group">
+                <label>Clarification Required *</label>
+                <textarea
+                  formControlName="notes"
+                  placeholder="Specify what clarifications are needed..."
+                  rows="4"
+                  class="form-control"
+                ></textarea>
+                <div *ngIf="actionForm.get('notes')?.invalid && actionForm.get('notes')?.touched" class="error-text">
+                  Clarification notes are required
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-clarify" [disabled]="actionForm.invalid || loading">
+                  Request Clarification
+                </button>
+                <button type="button" class="btn btn-cancel" (click)="selectedAction = null">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Already Reviewed Message -->
+        <div *ngIf="selectedReview.reviewStatus !== 'pending'" class="detail-section">
+          <div class="reviewed-message" [ngClass]="'status-' + selectedReview.reviewStatus">
+            <span class="icon">
+              {{ selectedReview.reviewStatus === 'approved' ? '✓' : selectedReview.reviewStatus === 'rejected' ? '✗' : '?' }}
+            </span>
+            <div class="message-content">
+              <strong>{{ getStatusLabel(selectedReview.reviewStatus) }}</strong>
+              <p *ngIf="selectedReview.reviewedAt">
+                Reviewed on {{ formatDate(selectedReview.reviewedAt) }} by {{ selectedReview.reviewedByName }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDetailModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

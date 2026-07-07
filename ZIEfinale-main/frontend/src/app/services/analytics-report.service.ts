@@ -59,6 +59,12 @@ export class AnalyticsReportService {
    */
   downloadAnalyticsCSV(startDate?: Date, endDate?: Date): Promise<void> {
     return new Promise((resolve, reject) => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        reject(new Error('No authentication token found. Please log in.'));
+        return;
+      }
+
       let params = new HttpParams();
       if (startDate) {
         params = params.set('startDate', startDate.toISOString());
@@ -70,6 +76,7 @@ export class AnalyticsReportService {
       this.http
         .get(`${this.apiUrl}/export/analytics-csv`, {
           params,
+          headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob',
         })
         .subscribe({
@@ -82,11 +89,10 @@ export class AnalyticsReportService {
                 try {
                   const error = JSON.parse(reader.result as string);
                   console.error('Server error:', error);
-                  alert(`Error: ${error.message || 'Failed to generate analytics report'}`);
-                  reject(error);
+                  reject(new Error(error.message || 'Failed to generate analytics report'));
                 } catch (e) {
-                  alert('Failed to download analytics report. Please try again.');
-                  reject(e);
+                  console.error('Failed to parse error response:', e);
+                  reject(new Error('Failed to download analytics report. Please try again.'));
                 }
               };
               reader.readAsText(blob);
@@ -105,15 +111,13 @@ export class AnalyticsReportService {
               resolve();
             } catch (error) {
               console.error('Error creating download link:', error);
-              alert('Failed to download file. Please try again.');
-              reject(error);
+              reject(error instanceof Error ? error : new Error('Failed to download file'));
             }
           },
           error: (error) => {
             console.error('Error downloading analytics CSV:', error);
-            const errorMessage = error?.error?.message || 'Failed to download analytics report';
-            alert(errorMessage);
-            reject(error);
+            const errorMessage = error?.error?.message || error?.message || 'Failed to download analytics report';
+            reject(new Error(errorMessage));
           },
         });
     });

@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApplicationService } from '../services/application.service';
 import { AuthService } from '../services/auth.service';
+import { AnalyticsReportService } from '../services/analytics-report.service';
 import { ApplicationStatsComponent, MembershipGradeStats } from '../components/application-stats.component';
 import { ExchangeRateApprovalManagementComponent } from '../components/exchange-rate-approval-management.component';
 
@@ -30,15 +31,27 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
             <span class="material-symbols-outlined">refresh</span>
             Refresh Applications
           </button>
+          <button (click)="downloadAnalyticsReport()" class="btn-download" [disabled]="isGeneratingReport">
+            <span class="material-symbols-outlined">download</span>
+            <span *ngIf="!isGeneratingReport">Download Analytics Report</span>
+            <span *ngIf="isGeneratingReport">Generating...</span>
+          </button>
           <button (click)="debugShowAllApplications()" class="btn-debug" style="margin-left: 10px;">
             <span class="material-symbols-outlined">bug_report</span>
             Debug: Show All
           </button>
+          <div *ngIf="downloadMessage" class="message" [ngClass]="{success: downloadSuccess}">
+            {{ downloadMessage }}
+          </div>
         </div>
 
         <!-- LIST VIEW -->
         <div *ngIf="showListView" class="list-view-section">
           <div class="section-header">
+            <button (click)="toggleViewMode()" class="btn-back">
+              <span class="material-symbols-outlined">arrow_back</span>
+              Back to Dashboard
+            </button>
             <h2>Applications Awaiting Certificate Approval</h2>
             <span class="count-badge">{{ awaitingApprovalApplications.length }}</span>
           </div>
@@ -82,78 +95,96 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
 
         <!-- DASHBOARD VIEW -->
 
-        <div *ngIf="!showListView" class="stats-section">
-          <div class="stat-card">
-            <h3>Total Applications</h3>
-            <p class="stat-value">{{ applications.length }}</p>
+        <!-- Super Admin Dashboard Guide Cards -->
+        <div *ngIf="!showListView" class="guide-section">
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">description</span>
+            </div>
+            <h3>View All Applications</h3>
+            <p>Review and manage all submitted applications across the system.</p>
+            <a routerLink="/applications-list" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              View Applications
+            </a>
           </div>
-          <div class="stat-card">
-            <h3>Passed Interviews</h3>
-            <p class="stat-value">{{ getPassedInterviewCount() }}</p>
-          </div>
-          <div class="stat-card">
-            <h3>Awaiting Approval</h3>
-            <p class="stat-value">{{ getAwaitingCertificateCount() }}</p>
-          </div>
-          <div class="stat-card">
-            <h3>Certificates Issued</h3>
-            <p class="stat-value">{{ getCertificatesIssuedCount() }}</p>
-          </div>
-        </div>
 
-        <div *ngIf="!showListView" class="analytics-section">
-          <!-- Application Stats by Membership Grade -->
-          <div class="stats-by-grade-section">
-            <app-application-stats [membershipGrades]="getApplicationStatsByGrade()"></app-application-stats>
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">checklist</span>
+            </div>
+            <h3>Certificate Approvals</h3>
+            <p>Review and approve certificates for applicants who passed interviews.</p>
+            <button (click)="toggleViewMode()" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              Approve Certificates
+            </button>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">currency_exchange</span>
+            </div>
+            <h3>Exchange Rate Management</h3>
+            <p>Manage and approve exchange rate requests from administrators.</p>
+            <button (click)="scrollToExchangeRate()" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              Manage Rates
+            </button>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">bar_chart</span>
+            </div>
+            <h3>View Statistics</h3>
+            <p>Monitor key metrics and insights about your membership operations.</p>
+            <div class="stats-dashboard">
+              <div class="stat-box">
+                <div class="stat-number">{{ applications.length }}</div>
+                <div class="stat-text">Total Applications</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">{{ getPassedInterviewCount() }}</div>
+                <div class="stat-text">Passed Interview</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">{{ getAwaitingCertificateCount() }}</div>
+                <div class="stat-text">Awaiting Approval</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">{{ getCertificatesIssuedCount() }}</div>
+                <div class="stat-text">Certificates Issued</div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Pending Certificate Approvals Section (Dashboard View) -->
         <div *ngIf="!showListView" class="pending-approvals-section">
-          <div class="section-header">
+          <div class="section-header white-header">
             <h2>Certificate Approvals Pending</h2>
             <span class="count-badge">{{ awaitingApprovalApplications.length }}</span>
           </div>
           
           <div class="approvals-list">
-            <div *ngIf="awaitingApprovalApplications.length > 0" class="approvals-grid">
-              <div *ngFor="let app of awaitingApprovalApplications" class="approval-card">
-                <div class="card-header">
-                  <h3>{{ app.personalParticulars.firstName }} {{ app.personalParticulars.lastName }}</h3>
-                  <span class="grade-badge">{{ app.chosenGrade }}</span>
-                </div>
-                
-                <div class="card-content">
-                  <div class="detail-item">
-                    <span class="label">Email:</span>
-                    <span class="value">{{ app.personalParticulars.email }}</span>
+            <div *ngIf="awaitingApprovalApplications.length > 0" class="approvals-list-container">
+              <div *ngFor="let app of awaitingApprovalApplications" class="approval-list-item">
+                <div class="item-info">
+                  <div class="item-header">
+                    <h4>{{ app.personalParticulars.firstName }} {{ app.personalParticulars.lastName }}</h4>
+                    <span class="grade-badge">{{ app.chosenGrade }}</span>
                   </div>
-                  <div class="detail-item">
-                    <span class="label">Division:</span>
-                    <span class="value">{{ app.chosenSpecialistDivision }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="label">Applied:</span>
-                    <span class="value">{{ app.createdAt | date: 'medium' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="label">Interview Passed:</span>
-                    <span class="value" *ngIf="app.interviewPassedDate">{{ app.interviewPassedDate | date: 'medium' }}</span>
-                    <span class="value" *ngIf="!app.interviewPassedDate">-</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="label">Registration Number:</span>
-                    <span class="value reg-number" *ngIf="app.registrationNumber">{{ app.registrationNumber }}</span>
-                    <span class="value" *ngIf="!app.registrationNumber">Pending Generation</span>
+                  <div class="item-details">
+                    <span class="detail"><strong>Email:</strong> {{ app.personalParticulars.email }}</span>
+                    <span class="detail"><strong>Division:</strong> {{ app.chosenSpecialistDivision }}</span>
+                    <span class="detail"><strong>Reg #:</strong> {{ app.registrationNumber || 'Pending' }}</span>
                   </div>
                 </div>
-                
-                <div class="card-actions">
-                  <button (click)="approveCertificate(app._id)" class="btn-approve">
-                    <span class="material-symbols-outlined">check_circle</span>
-                    Approve & Issue Certificate
-                  </button>
-                </div>
+                <button (click)="approveCertificate(app._id)" class="btn-approve-cert">
+                  <span class="material-symbols-outlined">check_circle</span>
+                  Approve & Issue
+                </button>
               </div>
             </div>
             
@@ -170,7 +201,10 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
         </div>
 
         <!-- Exchange Rate Approval Section -->
-        <app-exchange-rate-approval-management></app-exchange-rate-approval-management>
+        <div #exchangeRateRef></div>
+        <div id="exchange-rate-section">
+          <app-exchange-rate-approval-management></app-exchange-rate-approval-management>
+        </div>
       </div>
     </div>
   `,
@@ -182,15 +216,16 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
     }
 
     .header-section {
-      background-color: #004A59;
-      color: white;
+      background-color: white;
+      color: #004A59;
       padding: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      margin-top: 80px;
+      margin-top: 0;
       gap: 20px;
+      border-bottom: 3px solid #004A59;
     }
 
     .header-section h1 {
@@ -198,6 +233,7 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
       flex: 1;
       font-size: 24px;
       font-weight: 700;
+      color: #004A59;
     }
 
     .header-buttons {
@@ -287,6 +323,7 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
       margin-bottom: 20px;
       display: flex;
       justify-content: flex-end;
+      gap: 15px;
     }
 
     .btn-refresh {
@@ -306,6 +343,36 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
       &:hover {
         background-color: #B99532;
         border-color: #B99532;
+      }
+
+      .material-symbols-outlined {
+        font-size: 18px;
+      }
+    }
+
+    .btn-download {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background-color: #28a745;
+      color: white;
+      border: 2px solid #28a745;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+
+      &:hover:not(:disabled) {
+        background-color: #218838;
+        border-color: #218838;
+        transform: translateY(-2px);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
 
       .material-symbols-outlined {
@@ -603,10 +670,37 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
       margin-bottom: 20px;
       padding-bottom: 15px;
       border-bottom: 2px solid #e0e0e0;
+      gap: 20px;
+    }
+
+    .list-view-section .section-header .btn-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background-color: #B99532;
+      color: #004A59;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+
+      &:hover {
+        background-color: #a58628;
+        transform: translateY(-2px);
+      }
+
+      .material-symbols-outlined {
+        font-size: 18px;
+      }
     }
 
     .list-view-section h2 {
       margin: 0;
+      flex: 1;
       color: #004A59;
       font-size: 20px;
     }
@@ -716,6 +810,260 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
       font-size: 16px;
     }
 
+    /* Guide Section Styles */
+    .guide-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .guide-card {
+      background-color: white;
+      border: 2px solid #004A59;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+
+      &:hover {
+        box-shadow: 0 5px 15px rgba(0, 74, 89, 0.15);
+        transform: translateY(-3px);
+      }
+    }
+
+    .guide-icon {
+      width: 60px;
+      height: 60px;
+      background-color: #f0f0f0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      span {
+        font-size: 32px;
+        color: #B99532;
+      }
+    }
+
+    .guide-card h3 {
+      color: #004A59;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .guide-card p {
+      color: #666;
+      font-size: 14px;
+      margin: 0;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .stats-dashboard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #B99532;
+        box-shadow: 0 2px 8px rgba(185, 149, 50, 0.1);
+      }
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #B99532;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-text {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .guide-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      background-color: #004A59;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      border: 2px solid #004A59;
+      cursor: pointer;
+      font-family: inherit;
+
+      &:hover {
+        background-color: #003347;
+        border-color: #003347;
+        transform: translateX(3px);
+      }
+
+      span {
+        font-size: 18px;
+      }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .mini-stat {
+      background-color: #f9f9f9;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .stat-number {
+        font-size: 20px;
+        font-weight: 700;
+        color: #B99532;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: #666;
+        text-align: center;
+      }
+    }
+
+    .white-header {
+      background-color: white !important;
+      color: #004A59 !important;
+      border-bottom: 2px solid #004A59 !important;
+
+      h2 {
+        color: #004A59;
+      }
+
+      .count-badge {
+        background-color: #004A59 !important;
+        color: white !important;
+      }
+    }
+
+    .approvals-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .approval-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: white;
+        border-color: #B99532;
+        box-shadow: 0 2px 8px rgba(185, 149, 50, 0.1);
+      }
+    }
+
+    .item-info {
+      flex: 1;
+      text-align: left;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+
+      h4 {
+        margin: 0;
+        color: #004A59;
+        font-size: 15px;
+        font-weight: 700;
+      }
+    }
+
+    .item-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .detail {
+        font-size: 13px;
+        color: #555;
+
+        strong {
+          color: #004A59;
+          margin-right: 8px;
+        }
+      }
+    }
+
+    .btn-approve-cert {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+
+      &:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(33, 136, 56, 0.3);
+      }
+
+      span {
+        font-size: 18px;
+      }
+    }
+
     @media (max-width: 768px) {
       .header-section {
         flex-direction: column;
@@ -739,6 +1087,10 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
         grid-template-columns: repeat(2, 1fr);
       }
 
+      .guide-section {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
       .applications-table {
         font-size: 12px;
       }
@@ -755,6 +1107,9 @@ import { ExchangeRateApprovalManagementComponent } from '../components/exchange-
     }
 
     @media (max-width: 480px) {
+      .guide-section {
+        grid-template-columns: 1fr;
+      }
       .dashboard-wrapper {
         padding-bottom: 20px;
       }
@@ -870,10 +1225,16 @@ export class SuperAdminDashboardComponent implements OnInit {
   errorMessage = '';
   currentUser: any;
   showListView = false; // Toggle between dashboard (cards) and list view
+  isGeneratingReport = false;
+  downloadMessage = '';
+  downloadSuccess = false;
+
+  @ViewChild('exchangeRateRef') exchangeRateRef?: ElementRef;
 
   constructor(
     private applicationService: ApplicationService,
     private authService: AuthService,
+    private analyticsReportService: AnalyticsReportService,
     private router: Router
   ) {}
 
@@ -1076,6 +1437,37 @@ export class SuperAdminDashboardComponent implements OnInit {
     });
   }
 
+  /**
+   * Download analytics report as CSV
+   */
+  downloadAnalyticsReport(): void {
+    this.isGeneratingReport = true;
+    this.downloadMessage = '';
+    this.analyticsReportService.downloadAnalyticsCSV()
+      .then(() => {
+        console.log('Analytics report downloaded successfully');
+        this.downloadSuccess = true;
+        this.downloadMessage = '✓ Analytics report downloaded successfully';
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          this.downloadMessage = '';
+        }, 5000);
+      })
+      .catch((error) => {
+        console.error('Failed to download analytics report:', error);
+        this.downloadSuccess = false;
+        const errorMsg = error?.error?.message || error?.message || 'Failed to download analytics report';
+        this.downloadMessage = `✗ ${errorMsg}`;
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          this.downloadMessage = '';
+        }, 5000);
+      })
+      .finally(() => {
+        this.isGeneratingReport = false;
+      });
+  }
+
   // Super admin dashboard only needs to approve or reject certificates
   // No need to view full details - the list shows all necessary information
   viewApplicationDetails(applicationId: string): void {
@@ -1085,6 +1477,12 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   toggleViewMode(): void {
     this.showListView = !this.showListView;
+  }
+
+  scrollToExchangeRate(): void {
+    if (this.exchangeRateRef) {
+      this.exchangeRateRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   logout(): void {

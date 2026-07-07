@@ -27,7 +27,7 @@ import { authMiddleware, adminMiddleware, AuthRequest } from '../middleware/auth
 import { multipleUploadPDF, uploadPaymentProofPDF } from '../middleware/fileUpload';
 import { parseFormDataFields } from '../middleware/parseFormDataFields';
 import { registerFileUpload } from '../middleware/fileAccessControl';
-import { sendRefereeAppraisalEmail, sendSponsorAppraisalEmail } from '../services/emailService';
+import { sendRefereeAppraisalEmail, sendSponsorAppraisalEmail, testSMTPConnection, sendTestEmail } from '../services/emailService';
 
 const router = Router();
 
@@ -66,6 +66,35 @@ router.put('/:id/verify-payment', authMiddleware, adminMiddleware, verifyPayment
 router.get('/:id/preview', authMiddleware, adminMiddleware, getApplicationPreview);
 router.get('/:id/verification-report', authMiddleware, adminMiddleware, getVerificationReport);
 router.get('/:id/certificate', authMiddleware, getCertificate);
+
+// Email testing routes (admin only, for debugging)
+router.get('/test/smtp-connection', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const result = await testSMTPConnection();
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/test/send-email', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { toEmail } = req.body;
+    
+    if (!toEmail || !toEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Valid email address required in body: { toEmail: "test@example.com" }' 
+      });
+    }
+    
+    console.log('📧 Admin requested test email to:', toEmail);
+    const result = await sendTestEmail(toEmail);
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Root routes (must be last to avoid catching ID routes)
 // Specific POST route for expatriate applications (must come before generic POST)

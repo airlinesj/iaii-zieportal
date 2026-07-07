@@ -18,7 +18,7 @@ import { AuthService } from '../services/auth.service';
 
       <div class="login-card card">
         <div class="tab-content">
-          <h2>Log-in</h2>
+          <h2>LOGIN</h2>
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
             <div class="form-group">
@@ -35,15 +35,20 @@ import { AuthService } from '../services/auth.service';
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group password-group">
               <label for="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                formControlName="password"
-                placeholder="Enter your password"
-                class="form-input"
-              />
+              <div class="password-wrapper">
+                <input
+                  [type]="passwordFieldType"
+                  id="password"
+                  formControlName="password"
+                  placeholder="Enter your password"
+                  class="form-input"
+                />
+                <button type="button" class="show-password-btn" (click)="togglePasswordVisibility()" [attr.aria-pressed]="passwordFieldType === 'text'">
+                  {{ passwordFieldType === 'password' ? 'Show' : 'Hide' }}
+                </button>
+              </div>
               <div class="error-message" *ngIf="loginForm.get('password')?.errors && (loginForm.get('password')?.touched || loginForm.get('password')?.dirty)">
                 Please enter a valid password
               </div>
@@ -371,6 +376,7 @@ export class LoginComponent implements OnInit {
   isApplicant = true;
   isLoading = false;
   errorMessage = '';
+  passwordFieldType: 'password' | 'text' = 'password';
 
   constructor(
     private fb: FormBuilder,
@@ -410,6 +416,15 @@ export class LoginComponent implements OnInit {
     }, 100);
   }
 
+  togglePasswordVisibility(): void {
+    this.passwordFieldType = this.passwordFieldType === 'password' ? 'text' : 'password';
+    // Re-focus the password input so users can continue typing
+    setTimeout(() => {
+      const pw = document.querySelector('input#password') as HTMLInputElement;
+      if (pw) pw.focus();
+    }, 0);
+  }
+
 
   goBack(): void {
     this.router.navigate(['/']);
@@ -431,14 +446,14 @@ export class LoginComponent implements OnInit {
         console.log('Full response:', response);
         console.log('User object:', response.user);
         console.log('User role:', response.user?.role);
-        console.log('applicationType in response:', response.user?.applicationType);
-        console.log('classification:', response.classification);
+        console.log('Classification from backend:', response.classification?.classification);
         
         this.isLoading = false;
         
         // Verify login was successful before navigating
         if (response.token && response.user) {
-          console.log('✓ Login successful for:', response.user.email);
+          console.log('✅ Login successful for:', response.user.email);
+          console.log('📊 User Classification:', response.classification?.classification);
           console.log('🔄 Redirecting to /login-redirect');
           // Redirect to login redirect component which will handle smart routing
           this.router.navigate(['/login-redirect'], { replaceUrl: true });
@@ -451,7 +466,24 @@ export class LoginComponent implements OnInit {
         console.error('❌ Login error:', error);
         this.isLoading = false;
         console.error('Error details:', error.error);
-        this.errorMessage = error.error?.message || 'Login failed. Please check your credentials and try again.';
+        
+        // Provide better error messages for common cases
+        let errorMessage = error.error?.message || 'Login failed. Please check your credentials and try again.';
+        
+        if (error.status === 401) {
+          // Check if it's a lockout message
+          if (errorMessage.includes('too many') || errorMessage.includes('locked')) {
+            errorMessage = '⛔ Account temporarily locked. Please try again in 5 minutes.';
+          } else {
+            errorMessage = '❌ Invalid email or password. Please try again.';
+          }
+        } else if (error.status === 0 || error.statusText === 'Unknown Error') {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+        } else if (error.status === 403) {
+          errorMessage = '🔒 Account access denied. Please contact support.';
+        }
+        
+        this.errorMessage = errorMessage;
         
         // Reset form for retry
         this.loginForm.patchValue({ password: '' });

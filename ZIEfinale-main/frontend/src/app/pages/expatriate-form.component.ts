@@ -97,7 +97,7 @@ class CustomValidators {
         <p class="loading-text">Submitting your application...</p>
       </div>
 
-      <h1>Expatriate Application Form - ZIE Membership</h1>
+      <h1>Expatriate Application Form - The ZImbabwe Institution of Engineers Membership</h1>
       <p class="form-subtitle">Professional Application for Non-Zimbabwean Engineering Professionals</p>
 
       <mat-stepper #stepper [@stepAnimation]="currentStep">
@@ -1314,19 +1314,21 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
     const remainingTime = this.MIN_LOADING_DURATION - elapsedTime;
 
     if (remainingTime > 0) {
-      // Show fade-out animation and keep overlay visible until minimum time is reached
-      this.isHidingOverlay = true;
+      // Keep overlay visible until minimum time is reached, then fade out
       setTimeout(() => {
-        this.isLoading = false;
-        this.isHidingOverlay = false;
+        this.isHidingOverlay = true;
+        setTimeout(() => {
+          this.isLoading = false;
+          this.isHidingOverlay = false;
+        }, 150);
       }, remainingTime);
     } else {
-      // Minimum time already passed, hide immediately with animation
+      // Minimum time already passed, hide with quick fade animation
       this.isHidingOverlay = true;
       setTimeout(() => {
         this.isLoading = false;
         this.isHidingOverlay = false;
-      }, 300); // Time for fade-out animation
+      }, 150);
     }
   }
 
@@ -1352,6 +1354,29 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
     console.log('✓ Expatriate Form - User is expatriate applicant, loading form');
     
     this.initializeForms();
+    
+    // Fetch available membership grades from backend
+    this.applicationService.getAvailableMembershipGrades().subscribe(
+      (response: any) => {
+        if (response && response.grades) {
+          console.log('✓ Membership grades loaded from backend:', response.grades);
+          // Map backend grades to display format
+          this.membershipGrades = response.grades.map((grade: any) => ({
+            id: grade.id,
+            name: grade.name,
+            description: grade.description,
+          }));
+          console.log('📋 Available grades updated:', this.membershipGrades);
+        } else {
+          console.warn('⚠ No grades returned from backend, using default list');
+        }
+      },
+      (error: any) => {
+        console.error('❌ Error fetching membership grades:', error);
+        console.warn('⚠ Using fallback hardcoded grades due to fetch error');
+        // Keep default grades if fetch fails
+      }
+    );
     
     // Watch for user data changes - if user becomes local, redirect
     this.authService.currentUser$.subscribe((user: any) => {
@@ -1435,6 +1460,62 @@ export class ExpatriateFormComponent implements OnInit, OnDestroy {
       letterFile: ['', Validators.required],
       declaration: [false, Validators.requiredTrue],
     });
+
+    // Restore saved form data from persistence service
+    this.restoreSavedFormData();
+  }
+
+  /**
+   * Restore previously saved form data from FormPersistenceService
+   */
+  private restoreSavedFormData(): void {
+    try {
+      const savedFormData = this.formPersistenceService.getFormData('expatriate-form');
+      
+      if (savedFormData && Object.keys(savedFormData).length > 0) {
+        console.log('📋 Restoring saved expatriate form data:', savedFormData);
+        
+        // Restore personal particulars
+        if (savedFormData['personalParticulars']) {
+          this.personalParticularsForm.patchValue(savedFormData['personalParticulars']);
+        }
+        
+        // Restore education
+        if (savedFormData['education']) {
+          this.educationForm.patchValue(savedFormData['education']);
+        }
+        
+        // Restore experience
+        if (savedFormData['experience']) {
+          this.experienceForm.patchValue(savedFormData['experience']);
+        }
+        
+        // Restore apprentices
+        if (savedFormData['apprentices']) {
+          this.apprenticesForm.patchValue(savedFormData['apprentices']);
+        }
+        
+        // Restore grade
+        if (savedFormData['grade']) {
+          this.gradeForm.patchValue(savedFormData['grade']);
+        }
+        
+        // Restore company letter
+        if (savedFormData['companyLetter']) {
+          this.companyLetterForm.patchValue(savedFormData['companyLetter']);
+        }
+        
+        // Restore uploaded files references
+        if (savedFormData['uploadedFileNames']) {
+          this.uploadedFileNames = savedFormData['uploadedFileNames'];
+        }
+        
+        console.log('✅ Expatriate form data restored successfully');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not restore saved form data:', error);
+      // Continue with empty form if restoration fails
+    }
   }
 
   applyCountrySpecificValidators(country: string): void {

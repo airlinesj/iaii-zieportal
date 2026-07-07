@@ -25,7 +25,7 @@ import { AuthService } from '../services/auth.service';
         <p class="dashboard-subtitle">Manage your membership application journey</p>
         <div class="status-info">
           <p class="status-text">📋 You are currently applying as a <strong>{{ currentApplicationType === 'local' ? 'Local' : 'Expatriate' }} Applicant</strong></p>
-          <p class="member-info">Upon approval, you will be recognized as a member of the Zimbabwe Institution of Engineers</p>
+          <p class="member-info">Upon approval, you will be recognized as a member of The ZImbabwe Institution of Engineers</p>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ import { AuthService } from '../services/auth.service';
         <!-- Local Applicant Card -->
         <div class="card application-card" *ngIf="currentApplicationType === 'local'">
           <div class="card-icon">📋</div>
-          <h2>Zimbabwe Institution of Engineers Application Form</h2>
+          <h2>The ZImbabwe Institution of Engineers Application Form</h2>
           <p>Complete or continue your Form M1 membership application</p>
           <button (click)="goToApplicationForm()" class="card-button">
             Go to Application

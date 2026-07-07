@@ -30,23 +30,119 @@ function getEmailTransporter() {
   const smtpPort = process.env.SMTP_PORT;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
+  const smtpSecure = process.env.SMTP_SECURE === 'true';
 
   if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
     console.warn('⚠️ SMTP configuration incomplete. Email service may not work.');
     console.warn('Required env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS');
+    console.warn('Current config:', {
+      SMTP_HOST: smtpHost ? '✓' : '✗',
+      SMTP_PORT: smtpPort ? '✓' : '✗',
+      SMTP_USER: smtpUser ? '✓' : '✗',
+      SMTP_PASS: smtpPass ? '✓' : '✗',
+      SMTP_SECURE: smtpSecure,
+      SMTP_FROM: process.env.SMTP_FROM ? '✓' : '✗',
+    });
   }
 
   const transporter = nodemailer.createTransport({
     host: smtpHost,
     port: parseInt(smtpPort || '587', 10),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    secure: smtpSecure, // true for 465, false for 587
     auth: {
       user: smtpUser,
       pass: smtpPass,
     },
+    // Improve connection reliability
+    requireTLS: !smtpSecure, // TLS required for port 587
+    tls: {
+      rejectUnauthorized: false, // Allow self-signed certs for testing
+    },
   });
 
   return transporter;
+}
+
+/**
+ * Test SMTP connection
+ */
+export async function testSMTPConnection(): Promise<{ success: boolean; message: string; error?: string }> {
+  try {
+    const transporter = getEmailTransporter();
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpSecure = process.env.SMTP_SECURE === 'true';
+
+    console.log('🧪 Testing SMTP Connection...');
+    console.log('   Host:', smtpHost);
+    console.log('   Port:', smtpPort);
+    console.log('   Secure (TLS):', smtpSecure);
+    console.log('   User:', smtpUser);
+
+    await transporter.verify();
+
+    console.log('✅ SMTP Connection Successful!');
+    return {
+      success: true,
+      message: `Successfully connected to ${smtpHost}:${smtpPort} as ${smtpUser}`,
+    };
+  } catch (error: any) {
+    console.error('❌ SMTP Connection Failed:', {
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+    });
+    return {
+      success: false,
+      message: 'SMTP connection failed',
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Send a test email to verify SMTP is working
+ */
+export async function sendTestEmail(toEmail: string): Promise<EmailResult> {
+  try {
+    console.log('📧 Sending test email to:', toEmail);
+    
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #2c3e50;">✅ SMTP Test Successful</h2>
+            
+            <p>This is a test email to verify your SMTP configuration is working correctly.</p>
+            
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Test Details:</strong></p>
+              <p>Timestamp: ${new Date().toISOString()}</p>
+              <p>From: ${process.env.SMTP_FROM || process.env.SMTP_USER}</p>
+            </div>
+            
+            <p>If you received this email, your SMTP configuration is working correctly!</p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <p style="font-size: 12px; color: #666;">
+              This is an automated test email from the ZIE Membership Portal.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    return sendEmail(toEmail, '✅ SMTP Test Email - Configuration Verified', htmlContent);
+  } catch (error: any) {
+    console.error('❌ Error sending test email:', error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 }
 
 /**
@@ -93,7 +189,7 @@ export async function sendRefereeAppraisalEmail(data: RefereeAppraisalEmailData)
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             
             <p style="font-size: 12px; color: #666;">
-              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+              This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
             </p>
           </div>
         </body>
@@ -115,7 +211,7 @@ Application ID: ${data.applicationId}
 Please review the application and provide your appraisal using the following link:
 ${appraisalLink}
 
-This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
     `;
 
     const mailOptions = {
@@ -191,7 +287,7 @@ export async function sendSponsorAppraisalEmail(data: SponsorAppraisalEmailData)
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             
             <p style="font-size: 12px; color: #666;">
-              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+              This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
             </p>
           </div>
         </body>
@@ -213,7 +309,7 @@ Application ID: ${data.applicationId}
 Please review the application and provide your appraisal using the following link:
 ${appraisalLink}
 
-This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
     `;
 
     const mailOptions = {
@@ -265,12 +361,22 @@ export async function sendEmail(
       html: htmlContent,
     };
 
+    console.log('📧 Attempting to send email:', {
+      from: mailOptions.from,
+      to,
+      subject,
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE,
+    });
+
     const info = await transporter.sendMail(mailOptions);
 
-    console.log('✉️ Email sent:', {
+    console.log('✅ Email sent successfully:', {
       messageId: info.messageId,
       to,
       subject,
+      response: info.response,
     });
 
     return {
@@ -278,7 +384,14 @@ export async function sendEmail(
       messageId: info.messageId,
     };
   } catch (error: any) {
-    console.error('❌ Error sending email:', error.message);
+    console.error('❌ Error sending email:', {
+      to,
+      subject,
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      full_error: error,
+    });
     return {
       success: false,
       error: error.message,
@@ -313,7 +426,7 @@ export async function sendInterviewNotificationEmail(
           <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
           
           <p style="font-size: 12px; color: #666;">
-            This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+            This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
           </p>
         </div>
       </body>
@@ -341,7 +454,7 @@ export async function sendApplicationConfirmationEmail(
           
           <p>Dear <strong>${name}</strong>,</p>
           
-          <p>Thank you for submitting your membership application to Zimbabwe Institution of Engineers.</p>
+          <p>Thank you for submitting your membership application to The ZImbabwe Institution of Engineers.</p>
           
           <p>Your application has been received and is currently being reviewed. Below are your application details:</p>
           
@@ -362,14 +475,14 @@ export async function sendApplicationConfirmationEmail(
           <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
           
           <p style="font-size: 12px; color: #666;">
-            This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+            This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
           </p>
         </div>
       </body>
     </html>
   `;
 
-  return sendEmail(email, 'Application Confirmation - Zimbabwe Institution of Engineers', htmlContent);
+  return sendEmail(email, 'Application Confirmation - The ZImbabwe Institution of Engineers', htmlContent);
 }
 
 /**
@@ -426,7 +539,7 @@ export async function sendStatusUpdateEmail(
           <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
           
           <p style="font-size: 12px; color: #666;">
-            This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+            This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
           </p>
         </div>
       </body>
@@ -505,7 +618,7 @@ export async function sendExchangeRateApprovalEmail(data: {
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             
             <p style="font-size: 12px; color: #666;">
-              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+              This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
             </p>
           </div>
         </body>
@@ -531,7 +644,7 @@ ${data.reason}
 Please review and take action at:
 ${frontendUrl}/admin/exchange-rate-approvals/${data.approvalId}
 
-This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
     `;
 
     const mailOptions = {
@@ -617,7 +730,7 @@ export async function sendExchangeRateApprovedEmail(data: {
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             
             <p style="font-size: 12px; color: #666;">
-              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+              This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
             </p>
           </div>
         </body>
@@ -640,7 +753,7 @@ ${data.approvalComment}
 
 The new exchange rate is now active in the system and will be used for all future fee calculations.
 
-This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
     `;
 
     const mailOptions = {
@@ -725,7 +838,7 @@ export async function sendExchangeRateRejectedEmail(data: {
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             
             <p style="font-size: 12px; color: #666;">
-              This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+              This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
             </p>
           </div>
         </body>
@@ -748,7 +861,7 @@ ${data.rejectionReason}
 
 If you believe this request should be reconsidered, please contact a superadmin or submit a new request with additional information.
 
-This is an automated email from the Zimbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
+This is an automated email from the The ZImbabwe Institution of Engineers Membership Portal. Please do not reply to this email.
     `;
 
     const mailOptions = {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -36,22 +36,56 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
       </div>
 
       <div class="dashboard-content">
-        <div class="stats-section">
-          <div class="stat-card">
-            <h3>Total Applications</h3>
-            <p class="stat-value">{{ applications.length }}</p>
+        <!-- Admin Dashboard Guide Cards -->
+        <div class="guide-section">
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">description</span>
+            </div>
+            <h3>View All Applications</h3>
+            <p>Review and manage all submitted applications. Click the "View Details" button at the top to access the detailed applications list.</p>
+            <a routerLink="/applications-list" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              Go to Applications
+            </a>
           </div>
-          <div class="stat-card">
-            <h3>Submitted</h3>
-            <p class="stat-value">{{ getStatusCount('Submitted') }}</p>
+
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">history</span>
+            </div>
+            <h3>Check Audit Trail</h3>
+            <p>View a complete history of all system activities and changes. Access detailed logs of who did what and when in the system.</p>
+            <a *ngIf="canAccessAuditTrail" routerLink="/audit-trail" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              View Audit Trail
+            </a>
+            <p *ngIf="!canAccessAuditTrail" class="no-access">You don't have access to Audit Trail</p>
           </div>
-          <div class="stat-card">
-            <h3>Under Review</h3>
-            <p class="stat-value">{{ getStatusCount('Under Review') }}</p>
+
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">bar_chart</span>
+            </div>
+            <h3>View Analytics</h3>
+            <p>Access comprehensive system analytics and reports. Analyze trends and performance metrics for the entire membership application process.</p>
+            <a *ngIf="canAccessAuditTrail" routerLink="/analytics" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              Go to Analytics
+            </a>
+            <p *ngIf="!canAccessAuditTrail" class="no-access">You don't have access to Analytics</p>
           </div>
-          <div class="stat-card">
-            <h3>Approved</h3>
-            <p class="stat-value">{{ getStatusCount('Approved') }}</p>
+
+          <div class="guide-card">
+            <div class="guide-icon">
+              <span class="material-symbols-outlined">settings</span>
+            </div>
+            <h3>Manage Memberships</h3>
+            <p>Configure membership grades, fees, and settings. Manage system-wide membership configurations and exchange rates.</p>
+            <button (click)="scrollToExchangeRate()" class="guide-link">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              Go to Settings
+            </button>
           </div>
         </div>
 
@@ -86,36 +120,14 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
                   <span *ngIf="!isGeneratingReport">Download CSV Report</span>
                   <span *ngIf="isGeneratingReport">Generating...</span>
                 </button>
+                <div *ngIf="downloadMessage" class="message" [ngClass]="{success: downloadSuccess}">
+                  {{ downloadMessage }}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="analytics-section">
-          <!-- Current Applications Card -->
-          <div class="analytics-card">
-            <div class="card-header">
-              <h2>Latest Applicants</h2>
-              <span class="count-badge">{{ getNewApplicationsCount() }}</span>
-            </div>
-            <div class="card-content">
-              <div class="new-apps-list">
-                <div *ngIf="getNewApplications().length > 0" class="apps-grid">
-                  <div *ngFor="let app of getNewApplications()" class="app-item">
-                    <div class="app-name">{{ app.personalParticulars.firstName }} {{ app.personalParticulars.lastName }}</div>
-                    <div class="app-grade">{{ app.chosenGrade }}</div>
-                    <div class="app-date">{{ app.createdAt | date: 'short' }}</div>
-                  </div>
-                </div>
-                <div *ngIf="getNewApplications().length === 0" class="no-data">
-                  <p>No applications available</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-        </div>
 
         <!-- Application Stats by Membership Grade -->
         <div class="stats-by-grade-section">
@@ -126,6 +138,7 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
         <app-referee-responses></app-referee-responses>
 
         <!-- Exchange Rate Request Section -->
+        <div #exchangeRateRef></div>
         <app-exchange-rate-request></app-exchange-rate-request>
       </div>
     </div>
@@ -451,6 +464,7 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
 
     .button-group {
       display: flex;
+      flex-direction: column;
       gap: 10px;
       justify-content: flex-start;
       margin-top: 15px;
@@ -863,6 +877,96 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
       line-height: 1.5;
     }
 
+    /* Guide Section Styles */
+    .guide-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .guide-card {
+      background-color: white;
+      border: 2px solid #004A59;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .guide-card:hover {
+      box-shadow: 0 5px 15px rgba(0, 74, 89, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .guide-icon {
+      width: 60px;
+      height: 60px;
+      background-color: #f0f0f0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .guide-icon span {
+      font-size: 32px;
+      color: #B99532;
+    }
+
+    .guide-card h3 {
+      color: #004A59;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .guide-card p {
+      color: #666;
+      font-size: 14px;
+      margin: 0;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .guide-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      background-color: #004A59;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      border: 2px solid #004A59;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .guide-link:hover {
+      background-color: #003347;
+      border-color: #003347;
+      transform: translateX(3px);
+    }
+
+    .guide-link span {
+      font-size: 18px;
+    }
+
+    .no-access {
+      color: #999;
+      font-size: 13px;
+      font-style: italic;
+    }
+
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -904,6 +1008,8 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
   `]
 })
 export class AdminDashboardComponent implements OnInit {
+  @ViewChild('exchangeRateRef') exchangeRateRef!: ElementRef;
+
   applications: any[] = [];
   canAccessAuditTrail = false;
   isGeneratingReport = false;
@@ -915,6 +1021,10 @@ export class AdminDashboardComponent implements OnInit {
   isManualRate: boolean = false;
   rateUpdateMessage: string = '';
   rateUpdateSuccess: boolean = false;
+
+  // Download report properties
+  downloadMessage: string = '';
+  downloadSuccess: boolean = false;
 
   constructor(
     private applicationService: ApplicationService,
@@ -931,7 +1041,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   checkAuditTrailAccess(): void {
-    this.authService.getCurrentUser().subscribe(
+    this.authService.getCurrentUserObservable().subscribe(
       (user: any) => {
         // Allow if user is SuperAdmin or has canAccessAuditTrail flag
         this.canAccessAuditTrail = user.role === 'SuperAdmin' || user.canAccessAuditTrail;
@@ -1014,17 +1124,37 @@ export class AdminDashboardComponent implements OnInit {
     this.authService.logoutAndNavigate();
   }
 
+  scrollToExchangeRate(): void {
+    if (this.exchangeRateRef) {
+      this.exchangeRateRef.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   /**
    * Download analytics report as CSV
    */
   downloadAnalyticsReport(): void {
     this.isGeneratingReport = true;
+    this.downloadMessage = '';
     this.analyticsReportService.downloadAnalyticsCSV()
       .then(() => {
         console.log('Analytics report downloaded successfully');
+        this.downloadSuccess = true;
+        this.downloadMessage = '✓ Analytics report downloaded successfully';
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          this.downloadMessage = '';
+        }, 5000);
       })
       .catch((error) => {
         console.error('Failed to download analytics report:', error);
+        this.downloadSuccess = false;
+        const errorMsg = error?.error?.message || error?.message || 'Failed to download analytics report';
+        this.downloadMessage = `✗ ${errorMsg}`;
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          this.downloadMessage = '';
+        }, 5000);
       })
       .finally(() => {
         this.isGeneratingReport = false;

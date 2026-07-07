@@ -420,7 +420,7 @@ export class AuditExportService {
               <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
               
               <p style="font-size: 12px; color: #666;">
-                This is an automated message from the Zimbabwe Institution of Engineers Membership Portal audit system.
+                This is an automated message from the The ZImbabwe Institution of Engineers Membership Portal audit system.
               </p>
             </div>
           </body>
@@ -482,6 +482,134 @@ export class AuditExportService {
       });
     } catch (error: any) {
       console.error('Error generating on-demand report:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate CSV export of current audit logs (within 390 days)
+   */
+  async generateCurrentAuditReportCSV(auditorId: string): Promise<{ filePath: string; fileName: string }> {
+    try {
+      const auditor = await User.findById(auditorId);
+      if (!auditor || (auditor.role !== 'Admin' && auditor.role !== 'SuperAdmin')) {
+        throw new Error('Only admins/superadmins can generate audit reports');
+      }
+
+      // For auditor type accounts, allow access
+      if (auditor.role === 'Admin' && auditor.accountType !== 'audit') {
+        throw new Error('Only auditor accounts can generate audit reports');
+      }
+
+      // Get logs within the retention period (less than 390 days old)
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 390);
+
+      const logs = await AuditLog.find({
+        createdAt: { $gte: cutoffDate }
+      })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+
+      if (logs.length === 0) {
+        throw new Error('No current audit logs found');
+      }
+
+      return await this.generateCSVFromLogs(logs, 'current-audit-trail');
+    } catch (error: any) {
+      console.error('Error generating current audit report:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate CSV export of expired audit logs (390+ days old)
+   */
+  async generateExpiredAuditReportCSV(auditorId: string): Promise<{ filePath: string; fileName: string }> {
+    try {
+      const auditor = await User.findById(auditorId);
+      if (!auditor || (auditor.role !== 'Admin' && auditor.role !== 'SuperAdmin')) {
+        throw new Error('Only admins/superadmins can generate audit reports');
+      }
+
+      // For auditor type accounts, allow access
+      if (auditor.role === 'Admin' && auditor.accountType !== 'audit') {
+        throw new Error('Only auditor accounts can generate audit reports');
+      }
+
+      // Get logs beyond the retention period (390+ days old)
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 390);
+
+      const logs = await AuditLog.find({
+        createdAt: { $lt: cutoffDate }
+      })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+
+      if (logs.length === 0) {
+        throw new Error('No expired audit logs found. All logs are within the 390-day retention period.');
+      }
+
+      return await this.generateCSVFromLogs(logs, 'expired-audit-trail');
+    } catch (error: any) {
+      console.error('Error generating expired audit report:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper method to generate CSV from logs
+   */
+  private async generateCSVFromLogs(logs: IAuditLog[], reportName: string): Promise<{ filePath: string; fileName: string }> {
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      const fileName = `${reportName}-${timestamp}-${Date.now()}.csv`;
+      const filePath = path.join(this.exportDir, fileName);
+
+      // CSV headers
+      const headers = ['Date', 'Time', 'Admin Name', 'Admin Email', 'Action', 'Resource Type', 'Resource ID', 'Description', 'Status', 'IP Address', 'Changes'];
+
+      // CSV rows
+      const rows = logs.map((log) => [
+        new Date(log.createdAt).toLocaleDateString(),
+        new Date(log.createdAt).toLocaleTimeString(),
+        log.adminName || log.adminEmail.split('@')[0],
+        log.adminEmail,
+        log.action,
+        log.resourceType,
+        log.resourceId,
+        log.description,
+        log.status,
+        log.ipAddress || 'N/A',
+        log.changes ? JSON.stringify(log.changes) : '',
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) =>
+          row
+            .map((cell) => {
+              const cellStr = String(cell || '');
+              // Escape cells with commas, quotes, or newlines
+              if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                return `"${cellStr.replace(/"/g, '""')}"`;
+              }
+              return cellStr;
+            })
+            .join(',')
+        ),
+      ].join('\n');
+
+      fs.writeFileSync(filePath, csvContent, 'utf-8');
+      console.log(`✓ Generated CSV export: ${fileName}`);
+
+      return { filePath, fileName };
+    } catch (error: any) {
+      console.error('Error generating CSV:', error.message);
       throw error;
     }
   }

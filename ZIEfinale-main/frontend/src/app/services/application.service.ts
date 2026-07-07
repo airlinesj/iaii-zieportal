@@ -238,4 +238,13 @@ export class ApplicationService {
       { headers: this.getHeaders() }
     );
   }
+
+  /**
+   * Fetch available membership grades from the backend
+   * @returns Observable of grades array
+   */
+  getAvailableMembershipGrades(): Observable<any> {
+    const membershipApiUrl = `${environment.apiUrl}/membership`;
+    return this.http.get(`${membershipApiUrl}/available-grades`, { headers: this.getHeaders() });
+  }
 }

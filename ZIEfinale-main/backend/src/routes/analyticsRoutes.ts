@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { createGzip } from 'zlib';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AuditService } from '../services/AuditService';
 import { AnalyticsService } from '../services/AnalyticsService';
@@ -247,8 +248,11 @@ router.get('/export/pdf', authMiddleware, auditAccessMiddleware, async (req: Aut
       'Content-Disposition',
       `attachment; filename="${reportType}-${new Date().toISOString()}.pdf"`
     );
+    // Enable gzip compression for faster download
+    res.setHeader('Content-Encoding', 'gzip');
 
-    doc.pipe(res);
+    const gzip = createGzip();
+    doc.pipe(gzip).pipe(res);
   } catch (error) {
     console.error('Error exporting PDF:', error);
     res.status(500).json({ message: 'Error exporting PDF', error });
@@ -454,6 +458,9 @@ router.get('/export/pdf', authMiddleware, auditAccessMiddleware, async (req: Aut
       endDate ? new Date(endDate as string) : undefined
     );
 
+    // Enable gzip compression for faster download
+    res.setHeader('Content-Encoding', 'gzip');
+    
     res.download(filePath, fileName, (err) => {
       if (err) {
         console.error('Error sending PDF file:', err);
@@ -469,17 +476,12 @@ router.get('/export/pdf', authMiddleware, auditAccessMiddleware, async (req: Aut
   }
 });
 
-// Export audit logs as CSV
+// Export current audit logs as CSV (within 390 days)
 router.get('/export/csv', authMiddleware, auditAccessMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { startDate, endDate } = req.query;
-
     const exportService = AuditExportService.getInstance();
-    const { filePath, fileName } = await exportService.generateOnDemandReport(
-      req.userId as string,
-      'csv',
-      startDate ? new Date(startDate as string) : undefined,
-      endDate ? new Date(endDate as string) : undefined
+    const { filePath, fileName } = await exportService.generateCurrentAuditReportCSV(
+      req.userId as string
     );
 
     res.download(filePath, fileName, (err) => {
@@ -488,10 +490,33 @@ router.get('/export/csv', authMiddleware, auditAccessMiddleware, async (req: Aut
       }
     });
   } catch (error: any) {
-    console.error('Error exporting CSV:', error.message);
+    console.error('Error exporting current audit CSV:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to generate CSV export',
+      error: error.message,
+    });
+  }
+});
+
+// Export expired audit logs as CSV (390+ days old)
+router.get('/export/csv-expired', authMiddleware, auditAccessMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const exportService = AuditExportService.getInstance();
+    const { filePath, fileName } = await exportService.generateExpiredAuditReportCSV(
+      req.userId as string
+    );
+
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error('Error sending expired audit CSV file:', err);
+      }
+    });
+  } catch (error: any) {
+    console.error('Error exporting expired audit CSV:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate expired audit CSV export',
       error: error.message,
     });
   }
@@ -527,10 +552,10 @@ router.get('/export/info', authMiddleware, auditAccessMiddleware, async (req: Au
 // Generate analytics report CSV export (Admin/SuperAdmin only)
 router.get('/export/analytics-csv', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await User.findById(req.userId);
-    if (!user || (user.role !== 'Admin' && user.role !== 'SuperAdmin')) {
+    // Check if user has admin role (use cached role from auth middleware)
+    if (!req.userRole || (req.userRole !== 'Admin' && req.userRole !== 'SuperAdmin')) {
       return res.status(403).json({
-        message: 'Only admins can generate analytics reports.',
+        message: 'Only admins and superadmins can generate analytics reports.',
       });
     }
 
@@ -547,6 +572,32 @@ router.get('/export/analytics-csv', authMiddleware, async (req: AuthRequest, res
   } catch (error) {
     console.error('Error exporting analytics CSV:', error);
     res.status(500).json({ message: 'Error exporting analytics CSV', error });
+  }
+});
+
+// General analytics report download endpoint (for any admin/superadmin to use)
+router.get('/export/analytics', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    // Check if user has admin role
+    if (!req.userRole || (req.userRole !== 'Admin' && req.userRole !== 'SuperAdmin')) {
+      return res.status(403).json({
+        message: 'Only admins and superadmins can download analytics reports.',
+      });
+    }
+
+    const { startDate, endDate } = req.query;
+
+    const csv = await ReportExportService.generateAnalyticsCSV(
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined
+    );
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="analytics-report-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    console.error('Error exporting analytics:', error);
+    res.status(500).json({ message: 'Error exporting analytics', error });
   }
 });
 

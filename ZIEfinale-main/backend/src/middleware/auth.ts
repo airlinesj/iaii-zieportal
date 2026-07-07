@@ -11,8 +11,9 @@ export const generateToken = (userId: string, role: string): string => {
   if (!secret) {
     throw new Error('CRITICAL: JWT_SECRET environment variable not set. Cannot generate secure tokens.');
   }
-  // Short-lived access tokens (15 minutes) for security
-  return jwt.sign({ userId, role }, secret, { expiresIn: '15m' });
+  // Extended token expiry (7 days) for better user experience in development
+  // In production, consider using refresh tokens with shorter expiry (1-2 hours)
+  return jwt.sign({ userId, role }, secret, { expiresIn: '7d' });
 };
 
 export const verifyToken = (token: string): { userId: string; role: string } => {

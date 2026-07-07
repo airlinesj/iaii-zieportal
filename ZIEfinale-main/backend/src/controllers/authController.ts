@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { User } from '../models/User';
+import { Application } from '../models/Application';
 import { AuthRequest, generateToken } from '../middleware/auth';
 import { validationResult } from 'express-validator';
 import { UserClassificationService } from '../services/UserClassificationService';
@@ -179,10 +180,10 @@ export const login = async (req: AuthRequest, res: Response) => {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       user.lastFailedLogin = new Date();
 
-      // Lock account after 5 failed attempts for 30 minutes
-      if (user.failedLoginAttempts >= 5) {
+      // Lock account after 3 failed attempts for 5 minutes
+      if (user.failedLoginAttempts >= 3) {
         user.locked = true;
-        user.lockedUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        user.lockedUntil = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
         await user.save();
 
         // Log suspicious activity for ALL account types
@@ -192,7 +193,7 @@ export const login = async (req: AuthRequest, res: Response) => {
           'OTHER',
           'User',
           user._id.toString(),
-          `Account locked due to 5 failed login attempts`,
+          `Account locked due to 3 failed login attempts`,
           {
             status: 'FAILURE',
             errorMessage: 'Account locked - too many failed attempts',
@@ -201,7 +202,7 @@ export const login = async (req: AuthRequest, res: Response) => {
         );
 
         return res.status(401).json({
-          message: 'Account locked due to too many failed login attempts. Try again in 30 minutes.',
+          message: 'Account locked due to too many failed login attempts. Try again in 5 minutes.',
         });
       }
 
@@ -216,8 +217,11 @@ export const login = async (req: AuthRequest, res: Response) => {
     // Check if account is locked
     if (user.locked && user.lockedUntil) {
       if (new Date() < user.lockedUntil) {
+        // Calculate remaining minutes
+        const remainingMs = user.lockedUntil.getTime() - new Date().getTime();
+        const remainingMinutes = Math.ceil(remainingMs / 60000);
         return res.status(401).json({
-          message: 'Account is locked. Try again later.',
+          message: `Account is locked. Try again in ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}.`,
         });
       } else {
         // Unlock account if lock time has passed
@@ -231,8 +235,29 @@ export const login = async (req: AuthRequest, res: Response) => {
     user.failedLoginAttempts = 0;
     user.lastFailedLogin = undefined;
 
-    // Ensure user has country and applicationType (migration for old accounts ONLY)
+    // Track if we need to save user changes
     let needsSave = false;
+
+    // Check for accepted applications and update membership status
+    if (user.role === 'Applicant') {
+      const acceptedApplication = await Application.findOne({
+        userId: user._id,
+        status: { $in: ['Approved', 'Passed'] }
+      });
+
+      if (acceptedApplication && user.membershipStatus !== 'member') {
+        console.log('✓ User has accepted application, updating to member status');
+        user.membershipStatus = 'member';
+        user.role = 'Member'; // Update role as well
+        user.accountType = 'member';
+        needsSave = true;
+        console.log('  - Updated membershipStatus to: member');
+        console.log('  - Updated role to: Member');
+        console.log('  - Updated accountType to: member');
+      }
+    }
+
+    // Ensure user has country and applicationType (migration for old accounts ONLY)
     
     // For Applicants: ensure country is set (only for old accounts without it)
     if (user.role === 'Applicant' && !user.country) {

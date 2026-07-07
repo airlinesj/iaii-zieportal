@@ -72,7 +72,7 @@ class CustomValidators {
         <p class="loading-text">Submitting your application...</p>
       </div>
 
-      <h1>Form M1 - ZIE Membership Application</h1>
+      <h1>Form M1 - The ZImbabwe Institution of Engineers Membership Application</h1>
 
       <mat-stepper #stepper>
         <!-- Step 1: Personal Particulars -->
@@ -1751,6 +1751,83 @@ export class FormM1Component implements OnInit, OnDestroy {
     this.refereesForm = this.fb.group({
       referees: this.fb.array([this.createRefereeGroup(), this.createRefereeGroup(), this.createRefereeGroup()]),
     });
+
+    // Restore saved form data from persistence service
+    this.restoreSavedFormData();
+  }
+
+  /**
+   * Restore previously saved form data from FormPersistenceService
+   */
+  private restoreSavedFormData(): void {
+    try {
+      const savedFormData = this.formPersistenceService.getFormData('m1-form');
+      
+      if (savedFormData && Object.keys(savedFormData).length > 0) {
+        console.log('📋 Restoring saved M1 form data:', savedFormData);
+        
+        // Restore personal particulars
+        if (savedFormData['personalParticulars']) {
+          this.personalParticularsForm.patchValue(savedFormData['personalParticulars']);
+        }
+        
+        // Restore education
+        if (savedFormData['education'] && Array.isArray(savedFormData['education'])) {
+          const educationArray = this.educationArray;
+          // Remove default education entry
+          while (educationArray.length > 0) {
+            educationArray.removeAt(0);
+          }
+          // Add saved education entries
+          savedFormData['education'].forEach((edu: any) => {
+            const group = this.createEducationGroup();
+            group.patchValue(edu);
+            educationArray.push(group);
+          });
+        }
+        
+        // Restore experience
+        if (savedFormData['experience'] && Array.isArray(savedFormData['experience'])) {
+          const experienceArray = this.experienceArray;
+          // Remove default experience entries
+          while (experienceArray.length > 0) {
+            experienceArray.removeAt(0);
+          }
+          // Add saved experience entries
+          savedFormData['experience'].forEach((exp: any) => {
+            const group = this.createExperienceGroup();
+            group.patchValue(exp);
+            experienceArray.push(group);
+          });
+        }
+        
+        // Restore grade
+        if (savedFormData['grade']) {
+          this.gradeForm.patchValue(savedFormData['grade']);
+        }
+        
+        // Restore referees
+        if (savedFormData['referees'] && Array.isArray(savedFormData['referees'])) {
+          const refereesArray = this.refereesArray;
+          // Update existing referee entries
+          savedFormData['referees'].forEach((ref: any, index: number) => {
+            if (index < refereesArray.length) {
+              refereesArray.at(index).patchValue(ref);
+            }
+          });
+        }
+        
+        // Restore uploaded files references
+        if (savedFormData['uploadedFileNames']) {
+          this.uploadedFileNames = savedFormData['uploadedFileNames'];
+        }
+        
+        console.log('✅ M1 form data restored successfully');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not restore saved M1 form data:', error);
+      // Continue with empty form if restoration fails
+    }
   }
 
   /**
@@ -2226,13 +2303,15 @@ export class FormM1Component implements OnInit, OnDestroy {
 
     this.applicationService.submitApplicationWithFiles(formData).subscribe({
       next: (response) => {
-        // IMPORTANT: Keep isSubmitting = true to prevent double submissions
-        // Only set to false after user navigates away or after a long delay
+        console.log('✅ Application submitted successfully');
         this.successMessage =
           'Application submitted successfully! Redirecting to payment page...';
         
         // Clear saved form data on successful submission
         this.clearSavedFormData();
+        
+        // Hide loading spinner immediately - dialog will handle navigation
+        this.isSubmitting = false;
         
         // Close any existing dialog
         if (this.submissionDialogRef) {
@@ -2256,10 +2335,6 @@ export class FormM1Component implements OnInit, OnDestroy {
         console.log('📧 Email Send Status:', response.emailStatus);
         
         // Dialog will handle its own navigation and auto-close
-        // Keep loading state active for 30 seconds to prevent double submission attempts
-        setTimeout(() => {
-          this.isSubmitting = false;
-        }, 30000);
       },
       error: (error) => {
         // Allow retry on error - user can attempt submission again
@@ -2275,11 +2350,8 @@ export class FormM1Component implements OnInit, OnDestroy {
           errorMsg = error.message;
         }
         
-        console.error('=== Submission error details ===');
-        console.error('Full error:', error);
-        console.error('Error.error:', error?.error);
-        console.error('Error.error stringified:', JSON.stringify(error?.error, null, 2));
-        console.error('Error message extracted:', errorMsg);
+        console.error('❌ Submission error:', errorMsg);
+        console.error('Full error object:', error);
         this.errorMessage = errorMsg;
       },
     });

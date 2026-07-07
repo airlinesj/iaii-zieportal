@@ -12,7 +12,7 @@ import { AuthService } from '../services/auth.service';
     <div class="register-container">
       <div class="register-card card">
         <h2>Create Account</h2>
-        <p class="subtitle">Join the Zimbabwe Institution of Engineers</p>
+        <p class="subtitle">Join The ZImbabwe Institution of Engineers</p>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
           <div class="form-group">

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 interface ExchangeRateApproval {
   _id: string;
@@ -653,6 +654,7 @@ interface ExchangeRateApproval {
   `]
 })
 export class ExchangeRateApprovalManagementComponent implements OnInit, OnDestroy {
+  private apiUrl = `${environment.apiUrl}/settings`;
   pendingApprovals: ExchangeRateApproval[] = [];
   approvalHistory: ExchangeRateApproval[] = [];
   currentRate = 0;
@@ -682,7 +684,7 @@ export class ExchangeRateApprovalManagementComponent implements OnInit, OnDestro
   }
 
   getCurrentExchangeRate() {
-    this.http.get<any>('/api/settings/exchange-rate')
+    this.http.get<any>(`${this.apiUrl}/exchange-rate`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -696,7 +698,7 @@ export class ExchangeRateApprovalManagementComponent implements OnInit, OnDestro
   }
 
   loadApprovals() {
-    this.http.get<any>('/api/settings/exchange-rate/pending')
+    this.http.get<any>(`${this.apiUrl}/exchange-rate/pending`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -711,7 +713,7 @@ export class ExchangeRateApprovalManagementComponent implements OnInit, OnDestro
   }
 
   loadApprovalHistory() {
-    this.http.get<any>('/api/settings/exchange-rate/history?limit=10')
+    this.http.get<any>(`${this.apiUrl}/exchange-rate/history?limit=10`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -742,8 +744,8 @@ export class ExchangeRateApprovalManagementComponent implements OnInit, OnDestro
     
     this.isProcessing = true;
     const endpoint = this.approvalAction === 'approve' 
-      ? `/api/settings/exchange-rate/${this.selectedApprovalId}/approve`
-      : `/api/settings/exchange-rate/${this.selectedApprovalId}/reject`;
+      ? `${this.apiUrl}/exchange-rate/${this.selectedApprovalId}/approve`
+      : `${this.apiUrl}/exchange-rate/${this.selectedApprovalId}/reject`;
 
     this.http.post<any>(endpoint, { comment: this.approvalComment })
       .pipe(takeUntil(this.destroy$))

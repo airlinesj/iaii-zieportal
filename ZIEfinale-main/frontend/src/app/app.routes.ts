@@ -3,6 +3,7 @@ import { LandingComponent } from './pages/landing.component';
 import { LoginComponent } from './pages/login.component';
 import { LoginRedirectComponent } from './pages/login-redirect.component';
 import { RegisterComponent } from './pages/register.component';
+import { CpdApplicationComponent } from './pages/cpd-application.component';
 import { ApplicantDashboardComponent } from './pages/applicant-dashboard.component';
 import { FormM1Component } from './pages/form-m1.component';
 import { ExpatriateFormComponent } from './pages/expatriate-form.component';
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'login-redirect', component: LoginRedirectComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'apply-cpd', component: CpdApplicationComponent },
   { path: 'dashboard', component: ApplicantDashboardComponent, canActivate: [RoleGuard], data: { roles: ['Applicant'] } },
   { path: 'form-m1', component: FormM1Component, canActivate: [RoleGuard, ApplicationTypeGuard], data: { roles: ['Applicant'] } },
   { path: 'expatriate-form', component: ExpatriateFormComponent, canActivate: [RoleGuard, ApplicationTypeGuard], data: { roles: ['Applicant'] } },

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-@Component({0
+@Component({
   selector: 'app-landing',
   standalone: true,
   imports: [CommonModule, RouterModule],
@@ -10,15 +10,15 @@ import { RouterModule } from '@angular/router';
     <div class="landing-container">
       <div class="landing-content">
         <div class="logo-section">
-          <img src="assets/zielogo.png" alt="Zimbabwe Institution of Engineers Logo" class="landing-logo" />
+          <img src="assets/zielogo.png" alt="The ZImbabwe Institution of Engineers Logo" class="landing-logo" />
         </div>
         
-        <h1 class="landing-title">ZIMBABWE INSTITUTION OF ENGINEERS</h1>
+        <h1 class="landing-title">THE ZIMBABWE INSTITUTION OF ENGINEERS</h1>
         
         <p class="landing-subtitle">Professional Membership Application Portal</p>
         
         <div class="landing-description">
-          <p>Welcome to the Zimbabwe Institution of Engineers Membership Application Portal. Apply for professional membership and advance your engineering career.</p>
+          <p>Welcome to The ZImbabwe Institution of Engineers Membership Application Portal. Apply for professional membership and advance your engineering career.</p>
         </div>
 
         <div class="cta-buttons">
@@ -30,14 +30,18 @@ import { RouterModule } from '@angular/router';
             <span class="material-symbols-outlined">app_registration</span>
             Create Account
           </a>
+          <a routerLink="/apply-cpd" class="btn-cpd">
+            <span class="material-symbols-outlined">school</span>
+            Accredit a CPD Course
+          </a>
         </div>
 
         <!-- About Section -->
         <div class="info-section">
           <div class="info-divider"></div>
-          <h2 class="info-title">About ZIE</h2>
+          <h2 class="info-title">About The ZImbabwe Institution of Engineers</h2>
           <p class="info-text">
-            The Zimbabwe Institution of Engineers is the premier professional body representing engineers in Zimbabwe. 
+            The ZImbabwe Institution of Engineers is the premier professional body representing engineers in Zimbabwe. 
             We are dedicated to promoting excellence in engineering practice, professional development, and ethical standards.
           </p>
           
@@ -96,7 +100,7 @@ import { RouterModule } from '@angular/router';
       border: 2.5px solid #B99532;
       border-radius: 8px;
       padding: 60px 40px;
-      max-width: 600px;
+      max-width: 900px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
 
@@ -135,25 +139,28 @@ import { RouterModule } from '@angular/router';
 
     .cta-buttons {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       margin-bottom: 50px;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
-    .btn-login, .btn-register, .btn-view-details {
+    .btn-login, .btn-register, .btn-cpd, .btn-view-details {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 14px 30px;
-      font-size: 16px;
+      padding: 14px 28px;
+      font-size: 15px;
       font-weight: 700;
       border: 2.5px solid #004A59;
       border-radius: 8px;
       text-decoration: none;
       cursor: pointer;
       transition: all 0.3s ease;
-      min-width: 200px;
+      flex: 1;
+      min-width: 160px;
+      max-width: 250px;
     }
 
     .btn-login {
@@ -174,6 +181,16 @@ import { RouterModule } from '@angular/router';
     .btn-register:hover {
       background-color: #a58628;
       border-color: #004A59;
+    }
+
+    .btn-cpd {
+      background-color: #003F82;
+      color: #FFFFFF;
+    }
+
+    .btn-cpd:hover {
+      background-color: #002f68;
+      border-color: #B99532;
     }
 
     .btn-view-details {
@@ -252,14 +269,16 @@ import { RouterModule } from '@angular/router';
 
       .cta-buttons {
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
         margin-bottom: 40px;
       }
 
-      .btn-login, .btn-register {
-        min-width: 100%;
+      .btn-login, .btn-register, .btn-cpd {
+        width: 100%;
         padding: 12px 20px;
-        font-size: 15px;
+        font-size: 14px;
+        flex: none;
+        max-width: none;
       }
 
       .landing-description {

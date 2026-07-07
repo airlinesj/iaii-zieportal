@@ -2,16 +2,16 @@ import { Application } from '../models/Application';
 
 /**
  * Service to generate ZIE Professional Registration Numbers
- * Format: YYYY + 4-digit increment (e.g., 20260001, 20260002)
+ * Format: ZIE + YYYY + 4-digit increment (e.g., ZIE20260001, ZIE20260002)
  */
 class RegistrationNumberService {
   /**
    * Generate a unique ZIE Registration Number
-   * @returns Promise<string> - Registration number in format YYYY+4digit
+   * @returns Promise<string> - Registration number in format ZIE+YYYY+4digit
    */
   async generateZIERegistrationNumber(): Promise<string> {
     const currentYear = new Date().getFullYear().toString();
-    const registrationPrefix = `^${currentYear}`;
+    const registrationPrefix = `^ZIE${currentYear}`;
 
     try {
       // Find the last entry with current year's registration number
@@ -24,12 +24,12 @@ class RegistrationNumberService {
       let newSequence = '0001';
 
       if (lastEntry && lastEntry.registrationNumber) {
-        // Extract the 4-digit sequence from the last entry
-        const lastSequence = parseInt(lastEntry.registrationNumber.substring(4));
+        // Extract the 4-digit sequence from the last entry (skip 'ZIE' prefix and year)
+        const lastSequence = parseInt(lastEntry.registrationNumber.substring(7));
         newSequence = (lastSequence + 1).toString().padStart(4, '0');
       }
 
-      const newRegistrationNumber = currentYear + newSequence;
+      const newRegistrationNumber = 'ZIE' + currentYear + newSequence;
       return newRegistrationNumber;
     } catch (error) {
       console.error('Error generating registration number:', error);

@@ -233,29 +233,29 @@ interface AuditAdmin {
           <div class="export-options">
             <div class="option-card">
               <h4>
-                <span class="material-symbols-outlined">file_pdf</span>
-                PDF Format
+                <span class="material-symbols-outlined">archive</span>
+                Expired Audit Trail
               </h4>
-              <p>Comprehensive report with analysis, summary statistics, and detailed tables</p>
+              <p>Download audit logs that have reached 390 days and are about to be archived</p>
               <button 
-                (click)="exportAuditLog('pdf')"
-                class="btn-export pdf"
+                (click)="exportAuditLog('expired')"
+                class="btn-export expired"
                 [disabled]="isExporting"
               >
                 <span class="material-symbols-outlined">download</span>
-                {{ isExporting ? 'Generating PDF...' : 'Download PDF' }}
+                {{ isExporting ? 'Generating CSV...' : 'Download CSV' }}
               </button>
             </div>
 
             <div class="option-card">
               <h4>
                 <span class="material-symbols-outlined">table_chart</span>
-                CSV Format
+                Current Audit Trail
               </h4>
-              <p>Spreadsheet-compatible data for analysis in Excel or Google Sheets</p>
+              <p>Download active audit logs from the last 390 days for analysis in Excel or Google Sheets</p>
               <button 
-                (click)="exportAuditLog('csv')"
-                class="btn-export csv"
+                (click)="exportAuditLog('current')"
+                class="btn-export current"
                 [disabled]="isExporting"
               >
                 <span class="material-symbols-outlined">download</span>
@@ -1015,23 +1015,23 @@ interface AuditAdmin {
       margin-top: auto;
     }
 
-    .btn-export.pdf {
+    .btn-export.expired {
       background: #dc2626;
       color: white;
     }
 
-    .btn-export.pdf:hover:not(:disabled) {
+    .btn-export.expired:hover:not(:disabled) {
       background: #b91c1c;
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
     }
 
-    .btn-export.csv {
+    .btn-export.current {
       background: #16a34a;
       color: white;
     }
 
-    .btn-export.csv:hover:not(:disabled) {
+    .btn-export.current:hover:not(:disabled) {
       background: #15803d;
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(22, 163, 74, 0.2);
@@ -1296,11 +1296,15 @@ export class AuditManagementComponent implements OnInit {
     );
   }
 
-  exportAuditLog(format: 'pdf' | 'csv'): void {
+  exportAuditLog(type: 'expired' | 'current'): void {
     this.isExporting = true;
     this.exportMessage = '';
 
-    const endpoint = `${this.apiUrl}/export/${format}`;
+    const endpoint = type === 'expired' 
+      ? `${this.apiUrl}/export/csv-expired`
+      : `${this.apiUrl}/export/csv`;
+
+    const typeLabel = type === 'expired' ? 'Expired Audit Trail' : 'Current Audit Trail';
 
     this.http.get(endpoint, {
       headers: this.getHeaders(),
@@ -1309,7 +1313,7 @@ export class AuditManagementComponent implements OnInit {
     }).subscribe(
       (response: any) => {
         // Get filename from response headers if available
-        let filename = `audit-report.${format}`;
+        let filename = `${type}-audit-trail.csv`;
         const contentDisposition = response.headers.get('content-disposition');
         if (contentDisposition) {
           const match = contentDisposition.match(/filename="(.+)"/);
@@ -1328,7 +1332,7 @@ export class AuditManagementComponent implements OnInit {
         window.URL.revokeObjectURL(url);
 
         this.exportSuccess = true;
-        this.exportMessage = `${format.toUpperCase()} export downloaded successfully!`;
+        this.exportMessage = `${typeLabel} CSV downloaded successfully!`;
         this.isExporting = false;
 
         setTimeout(() => {
@@ -1336,9 +1340,9 @@ export class AuditManagementComponent implements OnInit {
         }, 5000);
       },
       (error) => {
-        console.error('Error exporting audit log:', error);
+        console.error(`Error exporting ${typeLabel}:`, error);
         this.exportSuccess = false;
-        this.exportMessage = error.error?.message || `Failed to export ${format.toUpperCase()}`;
+        this.exportMessage = error.error?.message || `Failed to export ${typeLabel}`;
         this.isExporting = false;
       }
     );

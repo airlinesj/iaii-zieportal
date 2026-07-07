@@ -1,6 +1,6 @@
-# ZIE Membership Application Portal
+# The ZImbabwe Institution of Engineers Membership Application Portal
 
-A comprehensive full-stack application for managing membership applications to the Zimbabwe Institution of Engineers (ZIE).
+A comprehensive full-stack application for managing membership applications to The ZImbabwe Institution of Engineers.
 
 ## Project Overview
 
@@ -413,7 +413,7 @@ For detailed email configuration help, see: [EMAIL_SETUP_COMPLETE.md](./EMAIL_SE
 
 ## License
 
-Proprietary - Zimbabwe Institution of Engineers
+Proprietary - The ZImbabwe Institution of Engineers
 
 ## Support
 

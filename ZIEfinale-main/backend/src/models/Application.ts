@@ -130,7 +130,7 @@ export interface IApplication extends Document {
   suggestedDivision: string;
   applicationFee: number;
   status: 'Draft' | 'Submitted' | 'Under Review' | 'Approved' | 'Pending' | 'Interview Required' | 'Rejected' | 'Approved with Conditions' | 'Passed';
-  registrationNumber?: string;      // ZIE Professional Registration Number (YYYY+4digit)
+  registrationNumber?: string;      // ZIE Professional Registration Number (ZIE+YYYY+4digit)
   interviewPassedDate?: Date;       // Date when interview was passed
   documents: {
     nationalIdCopy: string;

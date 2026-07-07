@@ -163,9 +163,11 @@ const userSchema = new Schema<IUser>(
     locked: {
       type: Boolean,
       default: false,
+      description: 'Whether account is locked due to failed login attempts (3 attempts in 5 mins)',
     },
     lockedUntil: {
       type: Date,
+      description: 'When the account lock will expire (5 minutes from lockout)',
     },
   },
   { timestamps: true }

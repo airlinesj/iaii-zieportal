@@ -104,8 +104,14 @@ interface AuditLog {
       </div>
 
       <div class="export-buttons">
-        <button (click)="exportCSV()" class="btn-export-csv">📥 Export as CSV</button>
-        <button (click)="exportPDF()" class="btn-export-pdf">📄 Export as PDF</button>
+        <button (click)="exportCSV()" class="btn-export-csv">
+          <span class="material-symbols-outlined">download</span>
+          Export as CSV
+        </button>
+        <button (click)="exportPDF()" class="btn-export-pdf">
+          <span class="material-symbols-outlined">description</span>
+          Export as PDF
+        </button>
       </div>
     </div>
   `,
@@ -348,12 +354,22 @@ interface AuditLog {
 
     .btn-export-csv,
     .btn-export-pdf {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 10px 16px;
       border: 1px solid #ddd;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
       transition: all 0.3s;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .btn-export-csv .material-symbols-outlined,
+    .btn-export-pdf .material-symbols-outlined {
+      font-size: 18px;
     }
 
     .btn-export-csv {

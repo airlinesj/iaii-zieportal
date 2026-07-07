@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+m#!/usr/bin/env node
 /**
  * Script to create test user accounts for development/testing
  * Run: node create-test-user.js

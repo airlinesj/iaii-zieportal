@@ -118,6 +118,7 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentUser();
     console.log('Current user from auth service:', currentUser?.email);
     console.log('Current user role:', currentUser?.role);
+    console.log('Current user account type:', currentUser?.accountType);
     
     // Verify we actually have a logged-in user
     if (!currentUser || !currentUser.email) {
@@ -127,19 +128,11 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Set a hard timeout - if we haven't navigated within 3 seconds, force navigation
+    // Set a hard timeout - if we haven't navigated within 5 seconds, force navigation
     this.navigationTimeout = setTimeout(() => {
-      console.warn('⚠ Timeout: Navigation taking too long, forcing redirect');
-      if (currentUser?.role === 'SuperAdmin') {
-        this.router.navigate(['/super-admin-dashboard'], { replaceUrl: true });
-      } else if (currentUser?.role === 'Admin') {
-        this.router.navigate(['/admin-dashboard'], { replaceUrl: true });
-      } else if (currentUser?.role === 'Applicant') {
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
-      } else {
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
-      }
-    }, 3000);
+      console.warn('⚠ Timeout: Navigation taking too long, forcing fallback redirect');
+      this.forceFallbackNavigation(currentUser);
+    }, 5000);
     
     // Get the classification that should have been set by auth.service
     const classification = this.roleBasedDashboardService.getClassification();
@@ -150,24 +143,21 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
     console.log('  - displayName:', classification?.displayName);
     
     if (classification && classification.classification) {
-      console.log('✓ Classification found:', classification.classification);
+      console.log('✅ Classification found:', classification.classification);
       this.userClassification = classification.classification;
       this.destination = this.getDashboardName(classification.classification);
       this.statusMessage = classification.displayName + ' - Redirecting...';
       
-      // Determine dashboard path based on classification
-      let dashboardPath = classification.dashboard;
-      if (classification.classification === 'audit') {
-        dashboardPath = '/audit-trail';
-      } else if (classification.classification === 'expatriate_applicant' || 
-          classification.classification === 'local_applicant') {
-        dashboardPath = '/dashboard';
-      } else if (classification.classification === 'superadmin') {
-        dashboardPath = '/super-admin-dashboard';
-      } else if (classification.classification === 'admin') {
-        dashboardPath = '/admin-dashboard';
-      }
+      // Map classification to correct dashboard paths
+      const dashboardMap: { [key: string]: string } = {
+        'audit': '/audit-trail',
+        'expatriate_applicant': '/dashboard',
+        'local_applicant': '/dashboard',
+        'superadmin': '/super-admin-dashboard',
+        'admin': '/admin-dashboard'
+      };
       
+      let dashboardPath = dashboardMap[classification.classification] || '/dashboard';
       console.log('Will navigate to:', dashboardPath);
       
       // Clear the hard timeout since we found classification
@@ -185,38 +175,12 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
         });
       }, 500);
     } else {
-      console.warn('⚠ No classification found, will use user role fallback');
+      console.warn('⚠ No classification found, using user role fallback');
       this.userClassification = currentUser?.role || 'unknown';
       
       // Fallback: use user role to determine dashboard
       if (currentUser) {
-        let dashboardPath = '/dashboard';
-        if (currentUser.role === 'SuperAdmin') {
-          dashboardPath = '/super-admin-dashboard';
-          this.destination = 'Super Admin Dashboard';
-          this.statusMessage = 'Super Administrator - Redirecting...';
-        } else if (currentUser.role === 'Admin') {
-          dashboardPath = '/admin-dashboard';
-          this.destination = 'Admin Dashboard';
-          this.statusMessage = 'Administrator - Redirecting...';
-        } else {
-          this.destination = 'Dashboard';
-          this.statusMessage = 'Applicant - Redirecting...';
-        }
-        
-        console.log('Using fallback dashboard:', dashboardPath);
-        
-        if (this.navigationTimeout) {
-          clearTimeout(this.navigationTimeout);
-        }
-        
-        this.navigationTimeout = setTimeout(() => {
-          console.log('🚀 Navigating (fallback) to:', dashboardPath);
-          this.router.navigate([dashboardPath], { replaceUrl: true }).catch(err => {
-            console.error('Navigation error (fallback):', err);
-            this.router.navigate(['/dashboard'], { replaceUrl: true });
-          });
-        }, 500);
+        this.navigateByUserRole(currentUser);
       }
     }
     } catch (error: any) {
@@ -233,6 +197,59 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.navigationTimeout) {
       clearTimeout(this.navigationTimeout);
+    }
+  }
+
+  /**
+   * Navigate user based on their role when classification is not available
+   */
+  private navigateByUserRole(currentUser: any): void {
+    let dashboardPath = '/dashboard';
+    
+    if (currentUser.role === 'SuperAdmin') {
+      dashboardPath = '/super-admin-dashboard';
+      this.destination = 'Super Admin Dashboard';
+      this.statusMessage = 'Super Administrator - Redirecting...';
+    } else if (currentUser.role === 'Admin') {
+      dashboardPath = '/admin-dashboard';
+      this.destination = 'Admin Dashboard';
+      this.statusMessage = 'Administrator - Redirecting...';
+    } else {
+      this.destination = 'Dashboard';
+      this.statusMessage = 'Applicant - Redirecting...';
+    }
+    
+    console.log('Using role-based fallback dashboard:', dashboardPath);
+    
+    if (this.navigationTimeout) {
+      clearTimeout(this.navigationTimeout);
+    }
+    
+    this.navigationTimeout = setTimeout(() => {
+      console.log('🚀 Navigating (role-based) to:', dashboardPath);
+      this.router.navigate([dashboardPath], { replaceUrl: true }).catch(err => {
+        console.error('Navigation error (role-based fallback):', err);
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      });
+    }, 500);
+  }
+
+  /**
+   * Force fallback navigation when timeout occurs
+   */
+  private forceFallbackNavigation(currentUser: any): void {
+    console.log('⚠️ Forcing fallback navigation due to timeout');
+    
+    if (currentUser.role === 'SuperAdmin') {
+      this.router.navigate(['/super-admin-dashboard'], { replaceUrl: true }).catch(() => {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      });
+    } else if (currentUser.role === 'Admin') {
+      this.router.navigate(['/admin-dashboard'], { replaceUrl: true }).catch(() => {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      });
+    } else {
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
     }
   }
 

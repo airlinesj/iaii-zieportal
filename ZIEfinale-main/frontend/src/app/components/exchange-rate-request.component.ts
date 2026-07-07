@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 interface ExchangeRateRequest {
   newRate: number;
@@ -529,6 +530,7 @@ interface ExchangeRateRequest {
   `]
 })
 export class ExchangeRateRequestComponent implements OnInit, OnDestroy {
+  private apiUrl = `${environment.apiUrl}/settings`;
   request: ExchangeRateRequest = {
     newRate: 0,
     reason: ''
@@ -558,7 +560,7 @@ export class ExchangeRateRequestComponent implements OnInit, OnDestroy {
   }
 
   loadCurrentRate() {
-    this.http.get<any>('/api/settings/exchange-rate')
+    this.http.get<any>(`${this.apiUrl}/exchange-rate`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -572,7 +574,7 @@ export class ExchangeRateRequestComponent implements OnInit, OnDestroy {
   }
 
   loadMyRequests() {
-    this.http.get<any>('/api/settings/exchange-rate/history?limit=5')
+    this.http.get<any>(`${this.apiUrl}/exchange-rate/history?limit=5`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -615,7 +617,7 @@ export class ExchangeRateRequestComponent implements OnInit, OnDestroy {
     this.successMessage = '';
     this.errorMessage = '';
 
-    this.http.post<any>('/api/settings/exchange-rate/request', {
+    this.http.post<any>(`${this.apiUrl}/exchange-rate/request`, {
       newRate: this.request.newRate,
       reason: this.request.reason
     })

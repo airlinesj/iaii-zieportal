@@ -40,18 +40,16 @@
       <rect x="10" y="10" width="190" height="277" stroke="#1e3a8a" fill="none" stroke-width="1"/>
 
       <!-- Header Section -->
-      <!-- Institution Logo - Using actual ZIE logo with transparent background -->
+      <!-- Institution Logo - Positioned below border lines to avoid interference -->
       <g class="logo-group">
-        <!-- Logo background circle for print visibility -->
-        <circle cx="105" cy="28" r="22" fill="#ffffff" opacity="0.5" class="print:opacity-0"/>
-        <!-- Institution Logo -->
-        <image x="85" y="8" width="40" height="40" href="assets/zielogo.png" preserveAspectRatio="xMidYMid meet" 
+        <!-- Institution Logo (positioned at y=24 to be clearly below inner border at y=10-287) -->
+        <image x="85" y="24" width="40" height="40" href="assets/zielogo-removebg-preview.png" preserveAspectRatio="xMidYMid meet" 
                style="image-rendering: crisp-edges; -webkit-print-color-adjust: exact; print-color-adjust: exact;" 
                filter="url(#logoFilter)" class="certificate-logo"/>
       </g>
 
       <!-- Institution Name -->
-      <text x="105" y="60" 
+      <text x="105" y="78" 
             text-anchor="middle" 
             font-size="7.5" 
             font-weight="bold" 
@@ -61,7 +59,7 @@
       </text>
 
       <!-- Founded Information -->
-      <text x="105" y="67" 
+      <text x="105" y="85" 
             text-anchor="middle" 
             font-size="3" 
             fill="#666"
@@ -72,7 +70,7 @@
 
       <!-- Certificate Statement Section -->
       <!-- "This is to Certify that" -->
-      <text x="105" y="85" 
+      <text x="105" y="103" 
             text-anchor="middle" 
             font-size="4.5" 
             fill="#333"
@@ -82,7 +80,7 @@
       </text>
 
       <!-- Applicant Name (Main Focus) -->
-      <text x="105" y="105" 
+      <text x="105" y="123" 
             text-anchor="middle" 
             font-size="11" 
             font-weight="bold" 
@@ -93,13 +91,13 @@
       </text>
 
       <!-- Dotted Line Under Applicant Name -->
-      <line x1="50" y1="108" x2="160" y2="108" 
+      <line x1="50" y1="126" x2="160" y2="126" 
             stroke="#000" 
             stroke-width="0.4"
             stroke-dasharray="1,1"/>
 
       <!-- Membership Grade Statement -->
-      <text x="105" y="120" 
+      <text x="105" y="138" 
             text-anchor="middle" 
             font-size="4.5" 
             fill="#333"
@@ -109,7 +107,7 @@
       </text>
 
       <!-- Membership Grade -->
-      <text x="105" y="135" 
+      <text x="105" y="153" 
             text-anchor="middle" 
             font-size="9" 
             font-weight="bold" 
@@ -120,23 +118,23 @@
       </text>
 
       <!-- Dotted Line Under Grade -->
-      <line x1="55" y1="138" x2="155" y2="138" 
+      <line x1="55" y1="156" x2="155" y2="156" 
             stroke="#000" 
             stroke-width="0.4"
             stroke-dasharray="1,1"/>
 
       <!-- Institution Statement -->
-      <text x="105" y="150" 
+      <text x="105" y="168" 
             text-anchor="middle" 
             font-size="4.5" 
             fill="#333"
             font-style="italic"
             font-family="'EB Garamond', 'Times New Roman', serif">
-        of The Zimbabwe Institution of Engineers
+        of The ZImbabwe Institution of Engineers
       </text>
 
       <!-- Date Admitted Section -->
-      <text x="105" y="165" 
+      <text x="105" y="183" 
             text-anchor="middle" 
             font-size="4.5" 
             fill="#333"
@@ -144,7 +142,7 @@
         on this date:
       </text>
 
-      <text x="105" y="175" 
+      <text x="105" y="193" 
             text-anchor="middle" 
             font-size="5" 
             font-weight="bold" 
@@ -154,7 +152,7 @@
       </text>
 
       <!-- Certificate ID -->
-      <text x="105" y="188" 
+      <text x="105" y="206" 
             text-anchor="middle" 
             font-size="3.5" 
             fill="#666"
@@ -163,7 +161,7 @@
       </text>
 
       <!-- Decorative Seal Circle - Large and Prominent -->
-      <g transform="translate(105, 210)">
+      <g transform="translate(105, 228)">
         <!-- Outer red border circle -->
         <circle cx="0" cy="0" r="16" fill="none" stroke="#c41e3a" stroke-width="1.5"/>
         <!-- Inner red circle -->
@@ -196,7 +194,7 @@
 
       <!-- Signature Section -->
       <!-- President Signature Area -->
-      <g transform="translate(0, 235)">
+      <g transform="translate(0, 253)">
         <!-- President Signature Line -->
         <line x1="25" y1="0" x2="65" y2="0" stroke="#000" stroke-width="0.5"/>
         <text x="45" y="6" 
@@ -209,7 +207,7 @@
       </g>
 
       <!-- Board Member Signature Area -->
-      <g transform="translate(0, 235)">
+      <g transform="translate(0, 253)">
         <!-- Board Member Signature Line -->
         <line x1="145" y1="0" x2="185" y2="0" stroke="#000" stroke-width="0.5"/>
         <text x="165" y="6" 
@@ -222,7 +220,7 @@
       </g>
 
       <!-- Footer Information -->
-      <text x="105" y="290" 
+      <text x="105" y="308" 
             text-anchor="middle" 
             font-size="2.5" 
             fill="#999"
@@ -236,15 +234,17 @@
 
 </div>
 
-<!-- Action Buttons (Hidden on Print) - Large and Prominent with Inline Styles -->
-<div style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 32px; z-index: 50;" class="print:hidden">
-  <button (click)="printCertificate()" 
-          style="padding: 20px 40px; background-color: #2563eb; color: white; font-weight: 800; font-size: 18px; border-radius: 16px; border: 2px solid #1d4ed8; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5); transition: all 150ms ease;">
-    🖨️ PRINT
-  </button>
-  <button (click)="generatePDF()" 
-          style="padding: 20px 40px; background-color: #16a34a; color: white; font-weight: 800; font-size: 18px; border-radius: 16px; border: 2px solid #15803d; cursor: pointer; box-shadow: 0 10px 25px rgba(22, 163, 74, 0.5); transition: all 150ms ease;">
-    ⬇️ DOWNLOAD
+<!-- Action Buttons (Hidden on Print) - Download Button Only -->
+<div style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; z-index: 50;" class="print:hidden">
+  <button 
+    (click)="generatePDF()" 
+    [disabled]="loading"
+    type="button"
+    style="padding: 20px 40px; background-color: #16a34a; color: white; font-weight: 800; font-size: 18px; border-radius: 16px; border: 2px solid #15803d; border: none; cursor: pointer; box-shadow: 0 10px 25px rgba(22, 163, 74, 0.5); transition: all 150ms ease;"
+    [style.opacity]="loading ? 0.7 : 1"
+    [style.cursor]="loading ? 'not-allowed' : 'pointer'">
+    <span *ngIf="!loading">⬇️ DOWNLOAD PDF</span>
+    <span *ngIf="loading">⏳ Generating...</span>
   </button>
 </div>
 

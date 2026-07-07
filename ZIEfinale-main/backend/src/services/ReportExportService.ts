@@ -23,7 +23,7 @@ export class ReportExportService {
       const lines: string[] = [];
 
       // Header
-      lines.push('Zimbabwe Institution of Engineers - Analytics Report');
+      lines.push('The ZImbabwe Institution of Engineers - Analytics Report');
       lines.push(`Generated: ${new Date().toISOString()}`);
       if (reportPeriod.startDate || reportPeriod.endDate) {
         lines.push(

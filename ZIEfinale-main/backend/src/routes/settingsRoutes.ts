@@ -99,24 +99,15 @@ router.post('/exchange-rate/request', authMiddleware, async (req: AuthRequest, r
 /**
  * Get pending exchange rate approvals (for superadmin dashboard)
  * GET /api/settings/exchange-rate/pending
- * Access: SuperAdmin only
+ * Access: SuperAdmin or Admin
  */
 router.get('/exchange-rate/pending', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'User not authenticated',
-      });
-    }
-
-    // Check if user is a superadmin
-    const user = await User.findById(userId);
-    if (!user || user.role !== 'SuperAdmin') {
+    // Check if user is a superadmin or admin (use cached role from auth middleware)
+    if (!req.userRole || (req.userRole !== 'SuperAdmin' && req.userRole !== 'Admin')) {
       return res.status(403).json({
         success: false,
-        message: 'Only superadmins can access pending approvals',
+        message: 'Only admins and superadmins can access pending approvals',
       });
     }
 

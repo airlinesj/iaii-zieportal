@@ -210,56 +210,6 @@ svg.certificate-frame {
 }
 
 /* ============================================
-  }
-
-  /* SVG rendering for print */
-  svg {
-    width: 100% !important;
-    height: 100% !important;
-    display: block !important;
-    visibility: visible !important;
-  }
-
-  /* Hide action buttons and interactive elements */
-  button,
-  .print\:hidden,
-  [class*="fixed"],
-  .shadow-lg,
-  .animate-spin {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  /* Text rendering optimization for print */
-  text {
-    text-rendering: optimizeLegibility;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* Line and shape rendering */
-  line, rect, circle {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}
-
-/* ============================================
-   RESPONSIVE DESIGN FOR DIFFERENT SCREENS
-   ============================================ */
-@media (max-width: 768px) {
-  #certificate-page {
-    width: calc(100vw - 16px) !important;
-    height: auto !important;
-    margin: 0 8px;
-  }
-
-  svg text {
-    font-size-adjust: 0.9;
-  }
-}
-
-/* ============================================
    ANIMATION & TRANSITION EFFECTS
    ============================================ */
 @media (prefers-reduced-motion: no-preference) {

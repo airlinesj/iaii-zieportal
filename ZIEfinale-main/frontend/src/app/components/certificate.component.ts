@@ -108,80 +108,138 @@ export class CertificateComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Convert image to base64 data URL
+   */
+  private async imageToDataUrl(imagePath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          reject(new Error('Could not get canvas context'));
+        }
+      };
+      img.onerror = () => {
+        reject(new Error(`Failed to load image: ${imagePath}`));
+      };
+      img.src = imagePath.startsWith('http') ? imagePath : `${window.location.origin}/${imagePath.replace(/^\//, '')}`;
+    });
+  }
+
+  /**
    * Generate and download certificate as PDF using jsPDF
-   * Converts SVG directly to PDF maintaining high quality
+   * Uses compression to keep file size under 7MB
    */
   async generatePDF(): Promise<void> {
+    this.loading = true;
+    this.error = null;
+    
     try {
       const certificateElement = document.getElementById('certificate-page');
       if (!certificateElement) {
         this.error = 'Certificate element not found';
+        this.loading = false;
         return;
       }
-
-      this.error = null;
       
-      // Wait for images to load before converting to canvas
-      const images = certificateElement.querySelectorAll('img, image');
-      const imagePromises = Array.from(images).map(img => {
-        return new Promise((resolve) => {
-          const imgElement = img as any;
-          if (imgElement.complete) {
-            resolve(true);
-          } else {
-            imgElement.onload = () => resolve(true);
-            imgElement.onerror = () => resolve(true);
+      // Convert image elements to data URLs (base64) for reliable PDF generation
+      const images = certificateElement.querySelectorAll('img, image') as NodeListOf<any>;
+      const imageMap: Map<Element, string> = new Map();
+      
+      for (const img of Array.from(images)) {
+        try {
+          const href = img.getAttribute('href') || img.getAttribute('src');
+          if (href) {
+            console.log('Converting image to data URL:', href);
+            const dataUrl = await this.imageToDataUrl(href);
+            imageMap.set(img, dataUrl);
+            // Replace with data URL
+            if (img.tagName.toLowerCase() === 'image') {
+              img.setAttribute('href', dataUrl);
+            } else {
+              img.setAttribute('src', dataUrl);
+            }
           }
-        });
-      });
-      await Promise.all(imagePromises);
-
-      // Add a small delay to ensure all styles are rendered
+        } catch (err) {
+          console.warn('Failed to convert image to data URL:', err);
+        }
+      }
+      
+      // Add a delay to ensure images are updated in DOM
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Convert SVG/HTML to canvas with optimized settings for print
+      // Convert SVG/HTML to canvas with optimized settings for compression
       const canvas = await html2canvas(certificateElement, {
         backgroundColor: '#fdfaf3',
-        scale: 3,
+        scale: 2, // Reduced from 3 for smaller file size while maintaining quality
         logging: false,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         windowWidth: 794,
         windowHeight: 1123,
-        imageTimeout: 5000,
         ignoreElements: (element) => {
+          // Ignore UI elements not needed in PDF
           if (element.classList?.contains('print:hidden')) return true;
           if (element.tagName === 'BUTTON') return true;
+          if (element.classList?.contains('fixed')) return true;
           return false;
         },
         onclone: (clonedDocument) => {
-          // Ensure images are visible in the cloned document
-          const clonedImages = clonedDocument.querySelectorAll('image');
+          // Ensure images are visible in the cloned document and fix paths
+          const clonedImages = clonedDocument.querySelectorAll('image, img') as NodeListOf<any>;
           clonedImages.forEach(img => {
-            (img as any).style.visibility = 'visible';
-            (img as any).style.opacity = '1';
+            // Make visible
+            img.style.visibility = 'visible';
+            img.style.opacity = '1';
+            img.style.display = 'block';
+            
+            // Ensure absolute paths for cloned images
+            let href = img.getAttribute('href') || img.getAttribute('src');
+            if (href && !href.startsWith('http')) {
+              href = `${window.location.origin}/${href.replace(/^\//, '')}`;
+              if (img.tagName.toLowerCase() === 'image') {
+                img.setAttribute('href', href);
+              } else {
+                img.setAttribute('src', href);
+              }
+            }
           });
         }
       });
 
-      // Create PDF with A4 dimensions
+      // Create PDF with A4 dimensions and compression
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true // Enable compression
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      // Convert canvas to JPEG (better compression than PNG) with quality 85
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
       const pageWidth = 210;
       const pageHeight = 297;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+      // Add image to PDF
+      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
       
+      // Save with compressed output
       const filename = `ZIE_Certificate_${this.certId}_${this.currentYear}.pdf`;
       pdf.save(filename);
+      
+      this.loading = false;
     } catch (err) {
       console.error('Error generating PDF:', err);
-      this.error = 'Failed to generate PDF. Please try again.';
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.error = `Failed to generate PDF: ${errorMsg}. Please try again.`;
+      this.loading = false;
     }
   }
 

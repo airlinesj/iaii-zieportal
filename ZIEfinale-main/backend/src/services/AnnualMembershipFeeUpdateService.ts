@@ -303,7 +303,7 @@ async function sendAnnualFeeUpdateEmail(params: {
         <div class="container">
           <div class="header">
             <h2>Annual Membership Fee Updated</h2>
-            <p>Zimbabwe Institution of Engineers</p>
+            <p>The ZImbabwe Institution of Engineers</p>
           </div>
           
           <div class="content">
@@ -353,12 +353,12 @@ async function sendAnnualFeeUpdateEmail(params: {
             
             <p>Thank you for your continued membership with ZIE.</p>
             
-            <p>Best regards,<br><strong>Zimbabwe Institution of Engineers</strong><br>Membership Department</p>
+            <p>Best regards,<br><strong>The ZImbabwe Institution of Engineers</strong><br>Membership Department</p>
           </div>
           
           <div class="footer">
             <p>This is an automated notification. Do not reply to this email.</p>
-            <p>© ${new Date().getFullYear()} Zimbabwe Institution of Engineers. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} The ZImbabwe Institution of Engineers. All rights reserved.</p>
           </div>
         </div>
       </body>

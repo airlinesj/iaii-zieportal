@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { User } from '../models/User';
+import { MembershipGrade } from '../models/MembershipGrade';
 import { getAnnualFeeStatus, getAnnualFeeAmount } from '../services/AnnualMembershipFeeService';
 import { exchangeRateService } from '../services/ExchangeRateService';
 
@@ -123,6 +124,39 @@ router.get('/all-fees', authMiddleware, async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching all fees:', error);
     res.status(500).json({ message: 'Failed to fetch fees' });
+  }
+});
+
+/**
+ * GET /api/membership/available-grades
+ * Get all available membership grades in the system
+ */
+router.get('/available-grades', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const grades = await MembershipGrade.find().sort({ minYearsExperience: 1 });
+
+    if (!grades || grades.length === 0) {
+      return res.status(200).json({
+        grades: [],
+        message: 'No membership grades found in the system',
+      });
+    }
+
+    return res.status(200).json({
+      grades: grades.map((grade) => ({
+        id: grade.gradeName,
+        name: grade.gradeName,
+        description: grade.description,
+        minYearsExperience: grade.minYearsExperience,
+        requiresDiploma: grade.requiresDiploma,
+        requiresTechnicalReport: grade.requiresTechnicalReport,
+        baseFee: grade.baseFee,
+      })),
+      count: grades.length,
+    });
+  } catch (error) {
+    console.error('Error fetching available grades:', error);
+    res.status(500).json({ message: 'Failed to fetch available membership grades' });
   }
 });
 

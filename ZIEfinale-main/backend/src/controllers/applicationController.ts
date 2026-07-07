@@ -60,7 +60,13 @@ export const createApplication = async (req: AuthRequest, res: Response) => {
       experience = req.body.experience;
       chosenGrade = req.body.chosenGrade;
       chosenSpecialistDivision = req.body.chosenSpecialistDivision;
-      sponsors = req.body.referees || req.body.sponsors;
+      sponsors = req.body.referees || req.body.sponsors || [];
+    }
+
+    // Ensure sponsors is always an array
+    if (!Array.isArray(sponsors)) {
+      console.warn('⚠️  Sponsors is not an array, converting to empty array');
+      sponsors = [];
     }
 
     console.log('Parsed Data:', { personalParticulars, chosenGrade, sponsorsCount: sponsors?.length });
@@ -139,18 +145,23 @@ export const createApplication = async (req: AuthRequest, res: Response) => {
     // Create sponsors with tokens
     console.log('📧 [SPONSOR DATA] Received sponsors from request:');
     console.log('   Raw sponsors:', JSON.stringify(sponsors));
+    console.log('   Sponsors array length:', sponsors?.length || 0);
     
-    const processedSponsors = sponsors.map((sponsor: any) => ({
-      sponsorName: sponsor.name || sponsor.sponsorName,
-      sponsorEmail: sponsor.email || sponsor.sponsorEmail,
+    const processedSponsors = (sponsors || []).map((sponsor: any) => ({
+      sponsorName: sponsor.name || sponsor.sponsorName || 'Unknown',
+      sponsorEmail: sponsor.email || sponsor.sponsorEmail || '',
       appraisalToken: crypto.randomBytes(32).toString('hex'),
       isConfidential: true,
-    }));
+    })).filter((sponsor: any) => sponsor.sponsorEmail); // Filter out sponsors without email
 
     console.log('📧 [SPONSOR DATA] Processed sponsors:');
-    processedSponsors.forEach((s: any, i: number) => {
-      console.log(`   Sponsor ${i + 1}: "${s.sponsorName}" <${s.sponsorEmail}>`);
-    });
+    if (processedSponsors.length === 0) {
+      console.log('   ⚠️  No valid sponsors to process (either empty array or missing emails)');
+    } else {
+      processedSponsors.forEach((s: any, i: number) => {
+        console.log(`   Sponsor ${i + 1}: "${s.sponsorName}" <${s.sponsorEmail}>`);
+      });
+    }
 
     // Create application
     const application = new Application({
@@ -214,20 +225,27 @@ export const createApplication = async (req: AuthRequest, res: Response) => {
         console.log('📧 [ASYNC EMAIL] Starting sponsor email send process...');
         console.log('   Total sponsors to email:', processedSponsors.length);
         
-        for (const sponsor of processedSponsors) {
-          try {
-            console.log(`📧 [ASYNC EMAIL] Sending to: "${sponsor.sponsorName}" <${sponsor.sponsorEmail}>`);
-            const result = await sendSponsorAppraisalEmail({
-              applicantName: `${personalParticulars.firstName} ${personalParticulars.lastName}`,
-              applicantEmail: personalParticulars.email,
-              sponsorName: sponsor.sponsorName,
-              sponsorEmail: sponsor.sponsorEmail,
-              applicationId: application._id.toString(),
-              sponsorToken: sponsor.appraisalToken,
-            });
-            console.log(`📧 [ASYNC EMAIL] Result for ${sponsor.sponsorEmail}:`, result.success ? '✓ SUCCESS' : '✗ FAILED');
-          } catch (error) {
-            console.error(`❌ [ASYNC EMAIL] Exception sending to ${sponsor.sponsorEmail}:`, error);
+        if (processedSponsors.length === 0) {
+          console.log('   ℹ️  No sponsors to email');
+        } else {
+          for (const sponsor of processedSponsors) {
+            try {
+              console.log(`📧 [ASYNC EMAIL] Sending to: "${sponsor.sponsorName}" <${sponsor.sponsorEmail}>`);
+              const result = await sendSponsorAppraisalEmail({
+                applicantName: `${personalParticulars.firstName} ${personalParticulars.lastName}`,
+                applicantEmail: personalParticulars.email,
+                sponsorName: sponsor.sponsorName,
+                sponsorEmail: sponsor.sponsorEmail,
+                applicationId: application._id.toString(),
+                sponsorToken: sponsor.appraisalToken,
+              });
+              console.log(`📧 [ASYNC EMAIL] Result for ${sponsor.sponsorEmail}:`, result.success ? '✓ SUCCESS' : '✗ FAILED');
+              if (!result.success) {
+                console.error(`     Error: ${result.error}`);
+              }
+            } catch (error) {
+              console.error(`❌ [ASYNC EMAIL] Exception sending to ${sponsor.sponsorEmail}:`, error);
+            }
           }
         }
         
@@ -1542,15 +1560,20 @@ export const confirmExpatriateAdmission = async (req: AuthRequest, res: Response
     if (status === 'rejected') {
       application.status = 'Rejected';
       // Log rejection to audit trail
-      await AuditService.logRejection(
-        req.userId as string,
-        admin?.email || '',
-        admin?.username,
-        id,
-        application.personalParticulars.email,
-        message || 'Expatriate application rejected',
-        req
-      );
+      try {
+        await AuditService.logRejection(
+          req.userId as string,
+          admin?.email || '',
+          admin?.username,
+          id,
+          application.personalParticulars.email,
+          message || 'Expatriate application rejected',
+          req
+        );
+      } catch (auditError) {
+        console.error('⚠️  Error logging rejection to audit trail:', auditError);
+        // Don't fail the request if audit logging fails
+      }
     }
 
     // Log admission/approval to audit trail
@@ -1560,19 +1583,24 @@ export const confirmExpatriateAdmission = async (req: AuthRequest, res: Response
         ? `Certificate approved for expatriate ${application.personalParticulars.email}. Registration Number: ${application.registrationNumber}`
         : `Expatriate application prepared for super admin approval: ${application.personalParticulars.email}`;
       
-      await AuditService.logAction(
-        req.userId as string,
-        admin?.email || '',
-        actionType as any,
-        'Application',
-        id,
-        actionDescription,
-        {
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent'),
-          adminName: admin?.username,
-        }
-      );
+      try {
+        await AuditService.logAction(
+          req.userId as string,
+          admin?.email || '',
+          actionType as any,
+          'Application',
+          id,
+          actionDescription,
+          {
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent'),
+            adminName: admin?.username,
+          }
+        );
+      } catch (auditError) {
+        console.error('⚠️  Error logging action to audit trail:', auditError);
+        // Don't fail the request if audit logging fails
+      }
     }
 
     // If Super Admin is admitting the applicant, update the user's membership status and grade

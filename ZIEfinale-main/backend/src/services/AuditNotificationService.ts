@@ -35,7 +35,7 @@ export class AuditNotificationService {
           },
         },
         {
-          $match: { count: { $gte: 3 } }, // 3+ failed attempts
+          $match: { count: { $gte: 5 } }, // 5+ failed attempts in one hour still triggers notification
         },
       ]);
 
