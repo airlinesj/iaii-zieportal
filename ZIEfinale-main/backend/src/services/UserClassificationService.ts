@@ -1,7 +1,7 @@
 import { IUser } from '../models/User';
 
 export interface UserClassification {
-  classification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit';
+  classification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit' | 'member';
   dashboard: string;
   role: string;
   displayName: string;
@@ -13,14 +13,14 @@ export class UserClassificationService {
    * Classify user and return their dashboard routing information
    */
   static classifyUser(user: IUser): UserClassification {
-    let classification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit';
+    let classification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit' | 'member';
     let dashboard: string;
     let displayName: string;
     let permissions: string[];
 
     if (user.role === 'SuperAdmin') {
       classification = 'superadmin';
-      dashboard = '/superadmin-dashboard';
+      dashboard = '/super-admin-dashboard';
       displayName = 'Super Administrator';
       permissions = [
         'view_all_applications',
@@ -28,6 +28,17 @@ export class UserClassificationService {
         'manage_users',
         'system_settings',
         'view_reports',
+      ];
+    } else if (user.role === 'Member') {
+      // Member classification for admitted users
+      classification = 'member';
+      dashboard = '/member-landing';
+      displayName = `Member - ${user.currentMembershipGrade || 'Member'}`;
+      permissions = [
+        'view_member_updates',
+        'apply_grade_upgrade',
+        'view_certificate',
+        'manage_annual_fees',
       ];
     } else if (user.accountType === 'audit') {
       classification = 'audit';

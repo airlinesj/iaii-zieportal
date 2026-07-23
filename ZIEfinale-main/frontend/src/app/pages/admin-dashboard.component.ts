@@ -9,11 +9,12 @@ import { AnalyticsReportService } from '../services/analytics-report.service';
 import { ApplicationStatsComponent, MembershipGradeStats } from '../components/application-stats.component';
 import { RefereeResponsesComponent } from '../components/referee-responses.component';
 import { ExchangeRateRequestComponent } from '../components/exchange-rate-request.component';
+import { TrainingElementsReviewComponent } from './training-elements-review/training-elements-review.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ApplicationStatsComponent, RefereeResponsesComponent, ExchangeRateRequestComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ApplicationStatsComponent, RefereeResponsesComponent, ExchangeRateRequestComponent, TrainingElementsReviewComponent],
   template: `
     <div class="dashboard-wrapper">
       <div class="header-section">
@@ -86,6 +87,21 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
               <span class="material-symbols-outlined">arrow_forward</span>
               Go to Settings
             </button>
+          </div>
+        </div>
+
+        <div class="cpd-review-section">
+          <div class="section-card">
+            <button type="button" class="section-toggle" (click)="toggleCpdSection()" [attr.aria-expanded]="isCpdSectionExpanded">
+              <div class="section-header">
+                <h3>CPD Assessment Submissions</h3>
+                <p>Review CPD assessment forms submitted by applicants and take action on pending submissions.</p>
+              </div>
+              <span class="toggle-icon" [class.expanded]="isCpdSectionExpanded">▾</span>
+            </button>
+            <div class="section-content" *ngIf="isCpdSectionExpanded">
+              <app-training-elements-review></app-training-elements-review>
+            </div>
           </div>
         </div>
 
@@ -244,6 +260,63 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
       max-width: 1200px;
       margin: 0 auto;
       padding: 30px 20px;
+    }
+
+    .cpd-review-section {
+      margin: 0 0 40px;
+    }
+
+    .section-card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .section-toggle {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .section-toggle:hover {
+      background-color: #f8fafc;
+    }
+
+    .section-header {
+      margin-bottom: 0;
+    }
+
+    .section-header h3 {
+      margin: 0 0 6px;
+      color: #004A59;
+      font-size: 1.2rem;
+    }
+
+    .section-header p {
+      margin: 0;
+      color: #6b7280;
+    }
+
+    .toggle-icon {
+      font-size: 1.25rem;
+      color: #004A59;
+      transition: transform 0.2s ease;
+    }
+
+    .toggle-icon.expanded {
+      transform: rotate(180deg);
+    }
+
+    .section-content {
+      padding: 0 24px 24px;
+      border-top: 1px solid #e5e7eb;
     }
 
     .stats-section {
@@ -1009,6 +1082,7 @@ import { ExchangeRateRequestComponent } from '../components/exchange-rate-reques
 })
 export class AdminDashboardComponent implements OnInit {
   @ViewChild('exchangeRateRef') exchangeRateRef!: ElementRef;
+  isCpdSectionExpanded = false;
 
   applications: any[] = [];
   canAccessAuditTrail = false;
@@ -1038,6 +1112,10 @@ export class AdminDashboardComponent implements OnInit {
     this.loadApplications();
     this.checkAuditTrailAccess();
     this.loadExchangeRate();
+  }
+
+  toggleCpdSection(): void {
+    this.isCpdSectionExpanded = !this.isCpdSectionExpanded;
   }
 
   checkAuditTrailAccess(): void {

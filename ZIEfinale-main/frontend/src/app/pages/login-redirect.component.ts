@@ -153,6 +153,7 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
         'audit': '/audit-trail',
         'expatriate_applicant': '/dashboard',
         'local_applicant': '/dashboard',
+        'member': '/member-landing',
         'superadmin': '/super-admin-dashboard',
         'admin': '/admin-dashboard'
       };
@@ -214,6 +215,10 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
       dashboardPath = '/admin-dashboard';
       this.destination = 'Admin Dashboard';
       this.statusMessage = 'Administrator - Redirecting...';
+    } else if (currentUser.role === 'Member') {
+      dashboardPath = '/member-landing';
+      this.destination = 'Member Portal';
+      this.statusMessage = 'Member - Redirecting...';
     } else {
       this.destination = 'Dashboard';
       this.statusMessage = 'Applicant - Redirecting...';
@@ -248,6 +253,10 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
       this.router.navigate(['/admin-dashboard'], { replaceUrl: true }).catch(() => {
         this.router.navigate(['/dashboard'], { replaceUrl: true });
       });
+    } else if (currentUser.role === 'Member') {
+      this.router.navigate(['/member-landing'], { replaceUrl: true }).catch(() => {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      });
     } else {
       this.router.navigate(['/dashboard'], { replaceUrl: true });
     }
@@ -261,6 +270,8 @@ export class LoginRedirectComponent implements OnInit, OnDestroy {
         return 'Super Admin Dashboard';
       case 'admin':
         return 'Admin Dashboard';
+      case 'member':
+        return 'Member Portal';
       case 'expatriate_applicant':
         return 'Dashboard';
       case 'local_applicant':

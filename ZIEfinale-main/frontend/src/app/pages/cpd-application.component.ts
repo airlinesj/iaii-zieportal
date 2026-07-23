@@ -252,14 +252,11 @@ import { calculateCpdDurationFeeUsd, convertUsdToLocalCurrency, calculateCpdDura
             <div class="estimated-fee-box">
               <h4>Your Estimated Course Fee:</h4>
               <div class="fee-display-large">
-                <div class="fee-item usd-fee">
-                  <span class="fee-label">USD:</span>
-                  <span class="fee-amount">{{ estimatedFee > 0 ? estimatedFee : '—' | currency: 'USD' : 'symbol' : '1.2-2' }}</span>
-                </div>
-                <div class="fee-divider">/</div>
-                <div class="fee-item zwl-fee">
-                  <span class="fee-label">ZWL:</span>
-                  <span class="fee-amount">{{ (estimatedFee * 26.5) > 0 ? (estimatedFee * 26.5 | number: '1.2-2') : '—' }}</span>
+                <div class="fee-item" [class.usd-fee]="paymentCurrency === 'USD'" [class.zwl-fee]="paymentCurrency === 'ZWL'">
+                  <span class="fee-label">{{ paymentCurrency }}:</span>
+                  <span class="fee-amount">
+                    {{ estimatedFee > 0 ? (estimatedFee | number: '1.2-2') : '—' }}
+                  </span>
                 </div>
               </div>
               <p class="fee-note" *ngIf="courseDurationText">{{ courseDurationText }}</p>

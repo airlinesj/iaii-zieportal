@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import ExchangeRateApprovalService from '../services/ExchangeRateApprovalService';
 import { ExchangeRateService } from '../services/ExchangeRateService';
 import { AnnualMembershipFeeUpdateService } from '../services/AnnualMembershipFeeUpdateService';
+import { normalizeExchangeRateInput } from '../utils/exchangeRateValidation';
 
 const router = Router();
 
@@ -52,6 +53,7 @@ router.post('/exchange-rate/request', authMiddleware, async (req: AuthRequest, r
       });
     }
     const { newRate, reason } = req.body;
+    const normalizedRate = normalizeExchangeRateInput(newRate);
 
     // Check if user is an admin
     const user = await User.findById(userId);
@@ -63,7 +65,7 @@ router.post('/exchange-rate/request', authMiddleware, async (req: AuthRequest, r
     }
 
     // Validate input
-    if (!newRate || typeof newRate !== 'number' || newRate <= 0) {
+    if (normalizedRate === null) {
       return res.status(400).json({
         success: false,
         message: 'Invalid exchange rate provided',
@@ -79,7 +81,7 @@ router.post('/exchange-rate/request', authMiddleware, async (req: AuthRequest, r
 
     // Create approval request
     const approvalService = ExchangeRateApprovalService.getInstance();
-    const approval = await approvalService.requestRateUpdate(userId, newRate, reason);
+    const approval = await approvalService.requestRateUpdate(userId, normalizedRate, reason);
 
     res.status(201).json({
       success: true,

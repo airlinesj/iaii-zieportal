@@ -84,7 +84,15 @@ export class TrainingElementsReviewComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          this.reviews = response.data || response || [];
+          const reviews = Array.isArray(response?.reviews)
+            ? response.reviews
+            : Array.isArray(response?.data)
+              ? response.data
+              : Array.isArray(response)
+                ? response
+                : [];
+
+          this.reviews = reviews;
           this.applyFiltersAndSort();
           this.loading = false;
         },

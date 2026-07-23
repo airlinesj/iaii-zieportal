@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject } from 'rxjs';
 
 export interface UserClassification {
-  classification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit';
+  classification: 'local_applicant' | 'expatriate_applicant' | 'admin' | 'superadmin' | 'audit' | 'member';
   dashboard: string;
   role: string;
   displayName: string;
@@ -116,6 +116,14 @@ export class RoleBasedDashboardService {
   isApplicant(): boolean {
     const classification = this.classification$.value;
     return classification?.classification === 'local_applicant' || classification?.classification === 'expatriate_applicant';
+  }
+
+  /**
+   * Check if user is member
+   */
+  isMember(): boolean {
+    const classification = this.classification$.value;
+    return classification?.classification === 'member';
   }
 
   /**

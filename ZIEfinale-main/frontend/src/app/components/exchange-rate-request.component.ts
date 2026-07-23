@@ -617,10 +617,12 @@ export class ExchangeRateRequestComponent implements OnInit, OnDestroy {
     this.successMessage = '';
     this.errorMessage = '';
 
-    this.http.post<any>(`${this.apiUrl}/exchange-rate/request`, {
-      newRate: this.request.newRate,
-      reason: this.request.reason
-    })
+    const payload = {
+      newRate: Number(this.request.newRate),
+      reason: this.request.reason.trim()
+    };
+
+    this.http.post<any>(`${this.apiUrl}/exchange-rate/request`, payload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

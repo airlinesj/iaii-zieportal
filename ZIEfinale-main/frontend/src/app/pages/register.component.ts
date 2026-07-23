@@ -130,7 +130,7 @@ import { AuthService } from '../services/auth.service';
       align-items: center;
       min-height: 100vh;
       background-color: #FFFFFF;
-      padding: 20px;
+      padding: 24px 32px;
       margin-top: 80px;
       position: relative;
       z-index: 10;
@@ -138,10 +138,10 @@ import { AuthService } from '../services/auth.service';
 
     .register-card {
       width: 100%;
-      max-width: 450px;
+      max-width: 720px;
       border: 2.5px solid #004A59 !important;
       border-radius: 8px;
-      padding: 30px;
+      padding: 32px;
     }
 
     h2 {

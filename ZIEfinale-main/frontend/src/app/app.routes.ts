@@ -5,6 +5,7 @@ import { LoginRedirectComponent } from './pages/login-redirect.component';
 import { RegisterComponent } from './pages/register.component';
 import { CpdApplicationComponent } from './pages/cpd-application.component';
 import { ApplicantDashboardComponent } from './pages/applicant-dashboard.component';
+import { MemberLandingComponent } from './pages/member-landing.component';
 import { FormM1Component } from './pages/form-m1.component';
 import { ExpatriateFormComponent } from './pages/expatriate-form.component';
 import { RefereeReviewComponent } from './pages/sponsor-review.component';
@@ -29,11 +30,12 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'apply-cpd', component: CpdApplicationComponent },
   { path: 'dashboard', component: ApplicantDashboardComponent, canActivate: [RoleGuard], data: { roles: ['Applicant'] } },
+  { path: 'member-landing', component: MemberLandingComponent, canActivate: [RoleGuard], data: { roles: ['Member'] } },
   { path: 'form-m1', component: FormM1Component, canActivate: [RoleGuard, ApplicationTypeGuard], data: { roles: ['Applicant'] } },
   { path: 'expatriate-form', component: ExpatriateFormComponent, canActivate: [RoleGuard, ApplicationTypeGuard], data: { roles: ['Applicant'] } },
   { path: 'payment', component: PaymentComponent, canActivate: [RoleGuard], data: { roles: ['Applicant'] } },
-  { path: 'updates', component: UpdatesComponent, canActivate: [RoleGuard], data: { roles: ['Applicant'] } },
-  { path: 'certificate/:id', component: CertificateComponent, canActivate: [RoleGuard], data: { roles: ['Applicant'] } },
+  { path: 'updates', component: UpdatesComponent, canActivate: [RoleGuard], data: { roles: ['Applicant', 'Member'] } },
+  { path: 'certificate/:id', component: CertificateComponent, canActivate: [RoleGuard], data: { roles: ['Applicant', 'Member'] } },
   { path: 'sponsor-review/:token', component: RefereeReviewComponent },
   { path: 'referee-review/:token', component: RefereeReviewComponent },
   { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [RoleGuard], data: { roles: ['Admin', 'SuperAdmin'] } },

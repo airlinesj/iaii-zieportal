@@ -113,6 +113,7 @@ export class AuthService {
       tap((response) => {
         console.log('✓ Login successful');
         console.log('  - User:', response.user.email);
+        console.log('  - Role:', response.user.role);
         console.log('  - Classification:', response.classification?.classification);
         console.log('  - Dashboard:', response.dashboard);
         
@@ -144,6 +145,13 @@ export class AuthService {
             response.classification.dashboard = '/admin-dashboard';
             response.classification.displayName = 'Administrator';
             response.classification.permissions = ['application_review', 'interview_management'];
+          }
+        } else if (response.user.role === 'Member') {
+          // Keep member classification as-is from backend
+          if (response.classification) {
+            response.classification.classification = 'member';
+            response.classification.role = 'Member';
+            response.classification.dashboard = '/member-landing';
           }
         }
         
