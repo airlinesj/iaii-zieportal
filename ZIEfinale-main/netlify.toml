@@ -1,6 +1,7 @@
 [build]
-  command = "cd frontend && npm install && npm run build"
-  publish = "frontend/dist/zie-frontend"
+  base = "ZIEfinale-main/frontend"
+  command = "npm install && npm run build"
+  publish = "dist/zie-frontend"
 
 [[redirects]]
   from = "/*"
