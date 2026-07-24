@@ -6,6 +6,7 @@ import { AppComponent } from './app/app.component';
 import { provideRouter } from '@angular/router';
 import { routes } from './app/app.routes';
 import { AuthInterceptor } from './app/services/auth.interceptor';
+import { MockBackendInterceptor } from './app/services/mock-backend.interceptor';
 import 'hammerjs'; // Enable gesture support for Material components
 
 bootstrapApplication(AppComponent, {
@@ -13,5 +14,6 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes),
     importProvidersFrom(HttpClientModule, BrowserAnimationsModule),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: MockBackendInterceptor, multi: true },
   ],
 }).catch((err) => console.error(err));
