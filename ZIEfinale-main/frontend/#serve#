@@ -1,3 +1,0 @@
- cd /home/julius/Desktop/ZIE/frontend && ng serve --verbose 2>&1 | head -100
- cd /home/julius/Desktop/ZIE/frontend && npm list @angular/cli
- cd /home/julius/Desktop/ZIE/frontend && npm install
