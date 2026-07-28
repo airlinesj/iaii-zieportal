@@ -8,7 +8,7 @@ interface MockUser {
   id: string;
   email: string;
   password: string;
-  role: 'Applicant' | 'Admin' | 'SuperAdmin';
+  role: 'Applicant' | 'Admin' | 'SuperAdmin' | 'Member';
   country?: string;
   applicationType?: 'local' | 'expatriate';
   accountType?: 'audit' | 'general';
@@ -236,8 +236,7 @@ export class MockBackendInterceptor implements HttpInterceptor {
       return throwError(() => ({ status: 401, error: { message: 'Unauthorized' } }));
     }
 
-    const responseUser = { ...user };
-    delete responseUser.password;
+    const { password: _password, ...responseUser } = user;
     return of(new HttpResponse({ status: 200, body: responseUser }));
   }
 
